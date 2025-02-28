@@ -1038,9 +1038,16 @@ function PlanetPage({ planets }) {
                 stencil: false,
                 alpha: false
               }}>
-              <ambientLight intensity={0.8} />
-              <pointLight position={[5, 5, 5]} intensity={1.0} />
-              <pointLight position={[-5, -5, -5]} intensity={0.5} />
+              <ambientLight intensity={0.3} /> {/* Darker ambient for better contrast */}
+              <pointLight position={[5, 5, 5]} intensity={1.2} color="#FFF8E0" />
+              <pointLight position={[-5, -5, -5]} intensity={0.3} color="#C0C8FF" />
+              
+              {/* Add distant sun glow */}
+              <mesh position={[15, 8, 15]}>
+                <sphereGeometry args={[2, 16, 16]} />
+                <meshBasicMaterial color="#FFFF88" />
+              </mesh>
+              <pointLight position={[15, 8, 15]} intensity={0.8} distance={30} />
               
               {/* Atmospheric glow for some planets */}
               {['venus', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(planet.id) && (

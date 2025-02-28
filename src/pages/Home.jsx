@@ -655,10 +655,13 @@ function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ri
           onPointerOut={() => { hovered.current = false }}
         >
           <icosahedronGeometry args={[size, 1]} />
-          <meshLambertMaterial 
+          <meshStandardMaterial 
             color={color} 
             emissive={color} 
-            emissiveIntensity={0.25}
+            emissiveIntensity={0.15}
+            roughness={0.8}
+            metalness={0.1}
+            side={THREE.FrontSide}
           />
         </mesh>
       )}
@@ -953,9 +956,9 @@ function Home({ planets }) {
           stencil: false,
           alpha: false
         }}>
-        <ambientLight intensity={1.0} />
-        <pointLight position={[10, 10, 10]} intensity={1.5} />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+        <ambientLight intensity={0.3} /> {/* Reduced to make night side darker */}
+        <pointLight position={[10, 10, 10]} intensity={1.0} color="#FFF8E0" />
+        <pointLight position={[-10, -10, -10]} intensity={0.3} color="#C0C8FF" />
         
         {/* Sun */}
         <mesh position={[0, 0, 0]}>
@@ -963,11 +966,24 @@ function Home({ planets }) {
           <meshBasicMaterial color="#FFFF00" />
         </mesh>
         
-        {/* Subtle sun glow */}
+        {/* Enhanced sun glow - multiple layers */}
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[3.2, 32, 32]} />
-          <meshBasicMaterial color="#FFFF00" transparent opacity={0.2} />
+          <meshBasicMaterial color="#FFFF00" transparent opacity={0.4} />
         </mesh>
+        
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[3.8, 32, 32]} />
+          <meshBasicMaterial color="#FFFF55" transparent opacity={0.2} />
+        </mesh>
+        
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[4.5, 24, 24]} />
+          <meshBasicMaterial color="#FFFFAA" transparent opacity={0.1} />
+        </mesh>
+        
+        {/* Add a point light at the sun's position */}
+        <pointLight position={[0, 0, 0]} intensity={0.8} distance={100} decay={2} />
         
         {/* Background stars - minimal count for stability */}
         <Stars radius={100} depth={50} count={1500} factor={3} saturation={0} />
