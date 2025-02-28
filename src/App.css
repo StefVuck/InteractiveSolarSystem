@@ -236,13 +236,115 @@ nav a:hover .planet-icon {
   background-color: rgba(100, 100, 150, 0.3);
 }
 
-.dwarf-planet-icon {
+.dwarf-planet-icon, .moon-icon {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   margin-right: 8px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Moon icon specific styling */
+.moon-icon {
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+/* Planets with moons */
+.has-moons {
+  position: relative;
+  display: block;
+}
+
+/* Dropdown indicator for planets with moons */
+.dropdown-indicator {
+  margin-left: 6px;
+  font-size: 10px;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+/* Rotate dropdown indicator when active */
+nav a.active .dropdown-indicator {
+  transform: rotate(180deg);
+}
+
+/* Styling for the moons dropdown */
+.moons-dropdown {
+  position: absolute;
+  top: 60px;
+  left: 100px; /* Default position, will be adjusted with JavaScript */
+  background-color: rgba(16, 25, 55, 0.98);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  min-width: 140px;
+  width: auto;
+  transform: scaleY(0);
+  transform-origin: top center;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 200;
+  display: block;
+  overflow: visible;
+}
+
+.moons-dropdown.open {
+  transform: scaleY(1);
+  opacity: 1;
+  pointer-events: all;
+  visibility: visible;
+  display: block;
+}
+
+/* Position each planet's dropdown, this solution sucks, but at least it works */
+.moons-dropdown[data-planet-id="earth"] {
+  left: 430px;
+}
+
+.moons-dropdown[data-planet-id="jupiter"] {
+  left: 670px;
+}
+
+.moons-dropdown ul {
+  list-style: none;
+  margin: 0;
+  padding: 5px 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: visible;
+}
+
+.moons-dropdown li {
+  border-bottom: 1px solid rgba(100, 100, 150, 0.2);
+  width: 100%;
+  display: block !important;
+  border-right: none;
+  padding: 0;
+  margin: 0;
+}
+
+.moons-dropdown li:last-child {
+  border-bottom: none;
+}
+
+.moons-dropdown a {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--text-color);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background-color 0.2s;
+  height: auto;
+}
+
+.moons-dropdown a:hover {
+  background-color: rgba(100, 100, 150, 0.3);
 }
 
 main {

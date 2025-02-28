@@ -7,7 +7,7 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Interactive 3D solar system using Three.js and React Three Fiber
 - Scientifically accurate planet models with custom textures and features:
   - Earth with realistic continents, clouds, orbiting moon, and International Space Station
-  - Jupiter with animated cloud bands and the Great Red Spot
+  - Jupiter with animated cloud bands, the Great Red Spot, and all four Galilean moons (Io, Europa, Ganymede, Callisto)
   - Saturn with detailed ring system showing gaps and particle distribution
   - Uranus with vertical ring system
 - Properly spaced orbital distances following astronomical scales
@@ -15,7 +15,8 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Voyager 1 and Voyager 2 spacecraft with glowing effects and information panels
 - Orbiting astronomy facts that appear as glowing text boxes
 - Advanced lighting with sun glow and day/night planet sides
-- Swiss-style navigation with planetary icons
+- Swiss-style navigation with planetary icons and dropdown menus for moons
+- Each moon has a detailed page with interactive 3D model and scientific information
 - Easter eggs: 
   - Hidden dwarf planets (Pluto, Ceres, Haumea, Makemake) that can be discovered
   - Secret menu accessible via double-click on a hidden button
@@ -53,7 +54,10 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Click on any planet to navigate to its detailed page
 - Click on Voyager spacecraft to see information about their missions
 - On Earth's page, you can see the ISS orbiting and visit the detailed Moon page
+- On Jupiter's page, you can see all four Galilean moons orbiting and explore their details
 - Use the navigation menu at the top with planetary icons to quickly jump to any planet
+- Click once on planets with moons (Earth and Jupiter) to open a dropdown menu of their moons
+- Double-click on these planets to go directly to the planet page
 - On individual planet pages, you can rotate and zoom in/out to explore the 3D models
 - Look for interesting facts orbiting in the system - they periodically change!
 - Find the hidden dwarf planets in the far reaches of the solar system
@@ -76,9 +80,18 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 src/
 ├── components/
 │   ├── celestial/        # Celestial body components (planets, moons, etc.)
+│   │   ├── DetailedPlanet.jsx   # Enhanced planet rendering
+│   │   ├── PlanetaryMoons.jsx   # System for rendering planet's moons
+│   │   ├── Moon.jsx             # Earth's moon component
+│   │   └── JupiterRedSpot.jsx   # Jupiter's Great Red Spot feature
 │   ├── common/           # Shared UI components
+│   │   └── HorizontalText.jsx   # Text that always faces camera horizontally
 │   ├── pages/            # Page-level components
+│   │   ├── MoonPage.jsx         # Earth's moon detail page
+│   │   └── MoonDetailPage.jsx   # Generic moon detail page for all moons
 │   ├── spacecraft/       # Spacecraft and satellite components
+│   │   ├── Spacecraft.jsx       # Generic spacecraft component
+│   │   └── ISS.jsx              # International Space Station
 │   └── OrbitingFacts.jsx # Astronomy facts display system
 ├── data/                 # Data sources for planets and facts
 ├── pages/                # Main route pages (Home, PlanetPage)
@@ -98,6 +111,8 @@ You can easily modify planets by editing the planets array in `src/data/planets.
 - `color` - The color of the planet
 - `description` - Detailed text about the planet
 
+Moons are defined with similar properties and are associated with their parent planets. Each moon has its own detailed texture, orbital characteristics, and scientific information.
+
 Add new astronomy facts in `src/data/astronomyFacts.js`.
 Add new spacecraft or satellites by following the pattern in the `Spacecraft` component.
 
@@ -107,9 +122,11 @@ The application has been optimized for stable WebGL performance by:
 - Limiting asteroid and particle counts
 - Optimizing lighting and shadow calculations
 - Reducing geometry complexity where appropriate
-- Using efficient texturing techniques
+- Using efficient texturing techniques with procedural generation
 - Properly managing animations and transitions
 - Separating complex rendering into dedicated components
+- Adding subtle glow effects that enhance visibility without impacting performance
+- Implementing adaptive detail levels based on viewing distance and device capabilities
 
 ## License
 GPLv3

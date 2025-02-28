@@ -732,3 +732,328 @@ export const createJupiterBandsTexture = () => {
   const texture = new THREE.CanvasTexture(canvas);
   return texture;
 };
+
+/**
+ * Creates a texture for Io (Galilean moon of Jupiter)
+ * Yellowish with sulfur volcano features
+ */
+export const createIoTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - yellowish sulfur surface
+  ctx.fillStyle = '#E8D14C';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add volcanic regions
+  const volcanicSpots = 30;
+  for (let i = 0; i < volcanicSpots; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 40 + 20;
+    
+    // Dark volcanic deposits
+    ctx.fillStyle = `rgba(80, 30, 10, ${Math.random() * 0.6 + 0.3})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add bright sulfur deposits
+  const sulfurDeposits = 50;
+  for (let i = 0; i < sulfurDeposits; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 20 + 5;
+    
+    // Bright sulfur colors
+    ctx.fillStyle = `rgba(255, 240, 130, ${Math.random() * 0.5 + 0.3})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some reddish areas (sulfur allotropes)
+  const redAreas = 15;
+  for (let i = 0; i < redAreas; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 60 + 30;
+    
+    ctx.fillStyle = `rgba(200, 50, 10, ${Math.random() * 0.4 + 0.1})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+/**
+ * Creates a texture for Europa (Galilean moon of Jupiter)
+ * Icy surface with distinctive linear features
+ */
+export const createEuropaTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - white icy surface
+  ctx.fillStyle = '#F0F8FF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add subtle blue-tinted regions
+  const icyRegions = 20;
+  for (let i = 0; i < icyRegions; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 100 + 50;
+    
+    ctx.fillStyle = `rgba(220, 230, 255, ${Math.random() * 0.3 + 0.1})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add Europan "linea" (crack features in the ice)
+  const lineCount = 40;
+  for (let i = 0; i < lineCount; i++) {
+    const startX = Math.random() * canvas.width;
+    const startY = Math.random() * canvas.height;
+    const length = Math.random() * 200 + 100;
+    const angle = Math.random() * Math.PI * 2;
+    
+    // Calculate end point
+    const endX = startX + Math.cos(angle) * length;
+    const endY = startY + Math.sin(angle) * length;
+    
+    // Draw a reddish-brown line
+    ctx.strokeStyle = `rgba(160, 80, 50, ${Math.random() * 0.6 + 0.3})`;
+    ctx.lineWidth = Math.random() * 3 + 1;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+  
+  // Add subtle craters
+  const craterCount = 15;
+  for (let i = 0; i < craterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 15 + 5;
+    
+    // Subtle crater rim
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Darker crater interior
+    ctx.fillStyle = `rgba(180, 190, 210, 0.6)`;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+/**
+ * Creates a texture for Ganymede (Galilean moon of Jupiter)
+ * Mix of darker and lighter terrain with groove features
+ */
+export const createGanymedeTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - light gray
+  ctx.fillStyle = '#C0C8D0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add dark terrain regions
+  const darkRegions = 12;
+  for (let i = 0; i < darkRegions; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 150 + 80;
+    
+    ctx.fillStyle = '#707890';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add light terrain (grooved terrain)
+  const lightRegions = 15;
+  for (let i = 0; i < lightRegions; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 120 + 60;
+    
+    ctx.fillStyle = '#D8E0E8';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add groove patterns
+  const grooveCount = 60;
+  for (let i = 0; i < grooveCount; i++) {
+    const startX = Math.random() * canvas.width;
+    const startY = Math.random() * canvas.height;
+    const length = Math.random() * 100 + 50;
+    const angle = Math.random() * Math.PI * 2;
+    
+    // Calculate end point
+    const endX = startX + Math.cos(angle) * length;
+    const endY = startY + Math.sin(angle) * length;
+    
+    // Draw groove
+    ctx.strokeStyle = `rgba(120, 130, 150, ${Math.random() * 0.5 + 0.3})`;
+    ctx.lineWidth = Math.random() * 2 + 1;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+  
+  // Add craters
+  const craterCount = 30;
+  for (let i = 0; i < craterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 20 + 5;
+    
+    // Crater rim
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater interior
+    ctx.fillStyle = '#909090';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+/**
+ * Creates a texture for Callisto (Galilean moon of Jupiter)
+ * Heavily cratered dark surface
+ */
+export const createCallistoTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - medium gray
+  ctx.fillStyle = '#8A8A98';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add lighter regions
+  const lightRegions = 12;
+  for (let i = 0; i < lightRegions; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 120 + 100;
+    
+    ctx.fillStyle = '#A0A0B0';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add even lighter patches
+  const brighterRegions = 5;
+  for (let i = 0; i < brighterRegions; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 80 + 40;
+    
+    ctx.fillStyle = '#C0C0C8';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add many small craters
+  const smallCraterCount = 300;
+  for (let i = 0; i < smallCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 8 + 2;
+    
+    // Crater rim
+    ctx.fillStyle = '#808080';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater interior
+    ctx.fillStyle = '#404050';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add large, more prominent craters
+  const largeCraterCount = 50;
+  for (let i = 0; i < largeCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 25 + 15;
+    
+    // Crater rim - brighter
+    ctx.fillStyle = '#C0C0C8';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater wall
+    ctx.fillStyle = '#7A7A88';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater floor
+    ctx.fillStyle = '#656575';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add Valhalla impact basin (largest crater on Callisto)
+  const valhallaX = canvas.width * 0.7;
+  const valhallaY = canvas.height * 0.4;
+  const valhallaSize = canvas.width * 0.15;
+  
+  // Multiple rings for Valhalla impact basin
+  for (let i = 0; i < 5; i++) {
+    const ringSize = valhallaSize * (1 + i * 0.2);
+    ctx.strokeStyle = `rgba(120, 120, 140, ${0.7 - i * 0.12})`;
+    ctx.lineWidth = 2 + i;
+    ctx.beginPath();
+    ctx.arc(valhallaX, valhallaY, ringSize, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};

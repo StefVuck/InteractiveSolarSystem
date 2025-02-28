@@ -10,6 +10,8 @@ import JupiterRedSpot from '../components/celestial/JupiterRedSpot';
 import ISS from '../components/spacecraft/ISS';
 import Moon from '../components/celestial/Moon';
 import MoonPage from '../components/pages/MoonPage';
+import MoonDetailPage from '../components/pages/MoonDetailPage';
+import PlanetaryMoons from '../components/celestial/PlanetaryMoons';
 import OrbitingFacts from '../components/OrbitingFacts';
 import HorizontalText from '../components/common/HorizontalText';
 
@@ -23,6 +25,7 @@ function PlanetPage({ planets }) {
   const { planetId } = useParams();
   const navigate = useNavigate();
   const [showMoon, setShowMoon] = useState(false);
+  const [selectedMoonId, setSelectedMoonId] = useState(null);
   const planet = planets.find(p => p.id === planetId) || planets[0];
   
   // Add animation effect when leaving the page
@@ -31,20 +34,38 @@ function PlanetPage({ planets }) {
   };
   
   // Toggle moon view
-  const handleMoonClick = () => {
+  const handleMoonClick = (moonId = 'moon') => {
+    setSelectedMoonId(moonId);
     setShowMoon(true);
   };
   
-  // Return from moon to Earth
+  // Return from moon to planet
   const handleBackFromMoon = () => {
     setShowMoon(false);
+    setSelectedMoonId(null);
+  };
+  
+  // Determines if current planet should have moons system
+  const hasMoons = (planetId) => {
+    return ['earth', 'jupiter'].includes(planetId);
   };
   
   return (
     <div className="planet-page">
       {showMoon ? (
-        // Show Moon page when moon is selected
-        <MoonPage onBackClick={handleBackFromMoon} />
+        // Show appropriate moon page when moon is selected
+        selectedMoonId === 'moon' ? (
+          // Earth's moon uses old MoonPage
+          <MoonPage onBackClick={handleBackFromMoon} />
+        ) : (
+          // Galilean moons use new MoonDetailPage
+          <MoonDetailPage 
+            moonId={selectedMoonId}
+            onBackClick={handleBackFromMoon}
+            parentPlanetId={planetId}
+            parentPlanetName={planet.name}
+          />
+        )
       ) : (
         // Regular planet view
         <>
@@ -94,7 +115,7 @@ function PlanetPage({ planets }) {
               <DetailedPlanet 
                 color={planet.color} 
                 planetId={planet.id} 
-                onMoonClick={planet.id === 'earth' ? handleMoonClick : undefined} 
+                onMoonClick={planet.id === 'earth' ? () => handleMoonClick('moon') : undefined} 
               />
               
               {/* Add Jupiter's Great Red Spot if on Jupiter's page */}
@@ -103,15 +124,16 @@ function PlanetPage({ planets }) {
               {/* Add ISS orbiting Earth */}
               {planet.id === 'earth' && <ISS orbitRadius={2.5} orbitSpeed={0.01} />}
               
-              {/* Add Moon to Earth */}
+              {/* Add moons to planets that have them */}
               {planet.id === 'earth' && <Moon />}
+              {planet.id === 'jupiter' && <PlanetaryMoons planetId="jupiter" onMoonClick={handleMoonClick} />}
               
               {/* Moon visit button for Earth */}
               {planet.id === 'earth' && (
                 <group position={[0, 4.5, 0]}>
                   <mesh onClick={(e) => {
                     e.stopPropagation();
-                    if (handleMoonClick) handleMoonClick();
+                    handleMoonClick('moon');
                   }}>
                     <planeGeometry args={[3, 0.7]} />
                     <meshBasicMaterial transparent opacity={0.7} color="#111133" />
