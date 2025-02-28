@@ -11,6 +11,7 @@ import RedSpot from '../components/celestial/RedSpot';
 import MiniMoon from '../components/celestial/MiniMoon';
 import Spacecraft from '../components/spacecraft/Spacecraft';
 import OrbitingFacts from '../components/OrbitingFacts';
+import HorizontalText from '../components/common/HorizontalText';
 
 // Import data and utilities
 import astronomyFacts from '../data/astronomyFacts';
@@ -278,19 +279,28 @@ function Home({ planets }) {
                 scale={[1.5, 1.5, 1.5]} // Make them slightly larger to be more visible
                 userData={{ isEasterEgg: true }}
                 onPointerOver={(e) => {
-                  // Find and show the label
+                  // Enhance the visibility of the label text when hovered
                   e.object.parent.children.forEach(child => {
-                    if (child.isText && child.userData.isDwarfPlanet && 
+                    if (child.type === 'Text' && child.userData.isDwarfPlanet && 
                         child.userData.id === dwarfPlanet.id) {
-                      child.visible = true;
+                      // Make text more visible on hover
+                      if (child.material) {
+                        child.material.opacity = 1.0;
+                        child.material.color.set('#FFFFFF');
+                      }
                     }
                   });
                 }}
                 onPointerOut={(e) => {
-                  // Hide the label again
+                  // Return text to subtle appearance
                   e.object.parent.children.forEach(child => {
-                    if (child.isText && child.userData.isDwarfPlanet) {
-                      child.visible = false;
+                    if (child.type === 'Text' && child.userData.isDwarfPlanet &&
+                        child.userData.id === dwarfPlanet.id) {
+                      // Return to subtle appearance
+                      if (child.material) {
+                        child.material.opacity = 0.5;
+                        child.material.color.set('#777777');
+                      }
                     }
                   });
                 }}
@@ -315,6 +325,22 @@ function Home({ planets }) {
                   side={THREE.BackSide}
                 />
               </mesh>
+              
+              {/* Always visible but very subtle name - with horizontal-only rotation */}
+              <HorizontalText
+                position={[x, y + dwarfPlanet.size*1.5 + 0.5, z]} // Slightly higher position
+                fontSize={0.25} // Much smaller text
+                color="#777777" // Gray color to blend with background
+                anchorX="center"
+                anchorY="middle"
+                material-opacity={0.5} // Apply opacity directly to material
+                material-transparent={true} // Ensure transparency works
+                visible={true} // Always visible but hard to see
+                userData={{ isDwarfPlanet: true, id: dwarfPlanet.id }}
+                renderOrder={10} // Ensure text renders on top
+              >
+                {dwarfPlanet.name}
+              </HorizontalText>
             </group>
           );
         })}
