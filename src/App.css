@@ -131,6 +131,31 @@ nav a:hover .planet-icon {
   transform: translate(-50%, -50%);
 }
 
+/* Other Projects button */
+.other-projects-button {
+  position: absolute;
+  right: 30px;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap;
+  border-left: 1px solid var(--border-color);
+}
+
+.other-projects-button:hover {
+  background-color: var(--menu-hover);
+  color: #fff;
+}
+
 /* Dwarf planet menu (hidden easter egg) */
 .dwarf-button {
   width: 8px;

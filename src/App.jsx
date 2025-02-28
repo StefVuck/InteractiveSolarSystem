@@ -57,6 +57,16 @@ function App() {
             ))}
           </ul>
           
+          {/* Other Projects button */}
+          <a 
+            href="https://github.com/StefVuck" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="other-projects-button"
+          >
+            Other Projects
+          </a>
+          
           {/* Hidden dwarf planet button (easter egg) */}
           <button 
             className={`dwarf-button ${dwarfMenuOpen ? 'active' : ''}`}
