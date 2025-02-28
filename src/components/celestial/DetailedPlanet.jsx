@@ -255,10 +255,10 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
     if (planetId === 'saturn') {
       return {
         innerRadius: 2.5,
-        outerRadius: 4,
+        outerRadius: 3.8, // Reduced the size to avoid blocking Titan
         color: '#F4D59C',
         rotation: [Math.PI / 4, 0, 0],
-        opacity: 1.0, // Fully opaque for Saturn
+        opacity: 0.9, // Slightly reduced opacity for better visibility
         texture: saturnRingsTexture
       };
     } else if (planetId === 'uranus') {

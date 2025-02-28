@@ -7,7 +7,8 @@ import {
   createIoTexture,
   createEuropaTexture,
   createGanymedeTexture,
-  createCallistoTexture
+  createCallistoTexture,
+  createTitanTexture
 } from '../../utils/textureGenerators';
 
 /**
@@ -74,10 +75,22 @@ const PlanetaryMoons = ({
         }
       ];
     }
-    // Saturn's moons could be added here in the future
+    // Saturn's moons
     else if (planetId === 'saturn') {
       return [
-        // Saturn's moons like Titan, Enceladus, etc.
+        { 
+          id: 'titan', 
+          name: 'Titan', 
+          color: '#E8A952', 
+          description: 'The largest moon of Saturn and the only moon in our solar system with a dense atmosphere and liquid on its surface.', 
+          orbitRadius: 10.0, 
+          orbitSpeed: 0.005, 
+          size: 0.5, 
+          startAngle: Math.PI * 0.25,
+          textureGenerator: createTitanTexture,
+          glowColor: '#FFCE7A'
+        }
+        // More Saturn moons like Enceladus can be added in the future
       ];
     }
     return [];

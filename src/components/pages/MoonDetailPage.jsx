@@ -8,18 +8,26 @@ import {
   createEuropaTexture,
   createGanymedeTexture,
   createCallistoTexture,
-  createMoonTexture
+  createMoonTexture,
+  createTitanTexture
 } from '../../utils/textureGenerators';
 
 /**
  * Component for rendering a detailed view of a moon
- * Used for both Earth's moon and Jupiter's moons
+ * Used for Earth's moon, Jupiter's moons, and Saturn's moons
  */
-const MoonDetailPage = ({ planets }) => {
+const MoonDetailPage = ({ planets, onBackClick, parentPlanetId: propParentId, parentPlanetName: propParentName, moonId: propMoonId }) => {
+  console.log('MoonDetailPage props:', { planets, onBackClick, propParentId, propParentName, propMoonId });
+  
   const navigate = useNavigate();
-  const { moonId } = useParams();
-  const [parentPlanetId, setParentPlanetId] = useState('jupiter');
-  const [parentPlanetName, setParentPlanetName] = useState('Jupiter');
+  // Get moonId from either props or URL params
+  const { moonId: urlMoonId } = useParams();
+  const moonId = propMoonId || urlMoonId;
+  
+  console.log('moonId used:', moonId);
+  
+  const [parentPlanetId, setParentPlanetId] = useState(propParentId || 'jupiter');
+  const [parentPlanetName, setParentPlanetName] = useState(propParentName || 'Jupiter');
   
   // Determine parent planet based on moon ID
   useEffect(() => {
@@ -29,11 +37,16 @@ const MoonDetailPage = ({ planets }) => {
     } else if (['io', 'europa', 'ganymede', 'callisto'].includes(moonId)) {
       setParentPlanetId('jupiter');
       setParentPlanetName('Jupiter');
+    } else if (['titan'].includes(moonId)) {
+      setParentPlanetId('saturn');
+      setParentPlanetName('Saturn');
     }
   }, [moonId]);
   
   // Get moon data based on ID
   const getMoonData = () => {
+    console.log('Moon ID in getMoonData:', moonId);
+    
     // Earth's moon
     if (moonId === 'moon') {
       return {
@@ -81,6 +94,20 @@ const MoonDetailPage = ({ planets }) => {
       };
     }
     
+    // Saturn's moons
+    if (moonId === 'titan') {
+      console.log('Rendering Titan!');
+      return {
+        name: 'Titan',
+        description: "Saturn's largest moon and the second largest in the solar system. Titan is the only moon with a dense atmosphere, composed mainly of nitrogen with clouds of methane and ethane. Its surface features lakes and seas of liquid hydrocarbons, making it the only place besides Earth known to have stable liquid on its surface. Beneath its thick orange haze, Titan has a landscape with mountains, dunes, and river networks that eerily resembles Earth.",
+        color: '#E8A952',
+        textureGenerator: createTitanTexture
+      };
+    }
+    
+    // Log if we're falling back to default case
+    console.log('Using default case for moon:', moonId);
+    
     // Default case
     return {
       name: 'Unknown Moon',
@@ -95,7 +122,11 @@ const MoonDetailPage = ({ planets }) => {
   
   // Handle back button click
   const handleBackClick = () => {
-    navigate(`/planet/${parentPlanetId}`);
+    if (onBackClick) {
+      onBackClick();
+    } else {
+      navigate(`/planet/${parentPlanetId}`);
+    }
   };
   
   return (

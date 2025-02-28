@@ -27,6 +27,9 @@ function App() {
       { id: 'europa', name: 'Europa' },
       { id: 'ganymede', name: 'Ganymede' },
       { id: 'callisto', name: 'Callisto' }
+    ],
+    'saturn': [
+      { id: 'titan', name: 'Titan' }
     ]
   };
   
@@ -183,7 +186,8 @@ function App() {
                           backgroundColor: moon.id === 'io' ? '#E8D14C' : 
                                           moon.id === 'europa' ? '#F0F8FF' :
                                           moon.id === 'ganymede' ? '#C0C8D0' :
-                                          moon.id === 'callisto' ? '#9A9AA0' : '#E0E0E0' 
+                                          moon.id === 'callisto' ? '#9A9AA0' :
+                                          moon.id === 'titan' ? '#E8A952' : '#E0E0E0' 
                         }}
                       ></span>
                       {moon.name}

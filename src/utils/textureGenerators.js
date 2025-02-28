@@ -1057,3 +1057,117 @@ export const createCallistoTexture = () => {
   const texture = new THREE.CanvasTexture(canvas);
   return texture;
 };
+
+/**
+ * Creates a texture for Titan (Saturn's largest moon)
+ * Orange-yellow hazy atmosphere with methane lakes
+ */
+export const createTitanTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - orange-yellow for the hazy atmosphere
+  ctx.fillStyle = '#E8A952';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Create atmospheric haze effect
+  for (let i = 0; i < 20; i++) {
+    const gradient = ctx.createRadialGradient(
+      canvas.width / 2, 
+      canvas.height / 2, 
+      0,
+      canvas.width / 2, 
+      canvas.height / 2, 
+      canvas.width / 2 + Math.random() * 100
+    );
+    
+    gradient.addColorStop(0, 'rgba(232, 169, 82, 0)');
+    gradient.addColorStop(0.5, `rgba(232, 169, 82, ${Math.random() * 0.05})`);
+    gradient.addColorStop(1, 'rgba(232, 169, 82, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  
+  // Add darker terrain variations
+  const darkPatches = 15;
+  for (let i = 0; i < darkPatches; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 150 + 50;
+    
+    ctx.fillStyle = `rgba(200, 140, 60, ${Math.random() * 0.3 + 0.1})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add methane lakes (dark bluish patches)
+  const lakeCount = 8;
+  for (let i = 0; i < lakeCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 60 + 30;
+    
+    // Dark methane lake
+    ctx.fillStyle = `rgba(40, 60, 80, ${Math.random() * 0.5 + 0.3})`;
+    
+    // Draw lake with uneven edges to look more natural
+    ctx.beginPath();
+    
+    // Create an irregular polygon for the lake
+    const points = 10 + Math.floor(Math.random() * 8);
+    for (let j = 0; j < points; j++) {
+      const angle = (j / points) * Math.PI * 2;
+      const radius = size * (0.7 + Math.random() * 0.6); // Vary the radius
+      const lakeX = x + Math.cos(angle) * radius;
+      const lakeY = y + Math.sin(angle) * radius;
+      
+      if (j === 0) {
+        ctx.moveTo(lakeX, lakeY);
+      } else {
+        ctx.lineTo(lakeX, lakeY);
+      }
+    }
+    
+    ctx.closePath();
+    ctx.fill();
+  }
+  
+  // Add lighter highland regions
+  const highlandCount = 10;
+  for (let i = 0; i < highlandCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 100 + 80;
+    
+    ctx.fillStyle = `rgba(255, 200, 130, ${Math.random() * 0.2 + 0.1})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create the haze layer effect by adding a semi-transparent overlay
+  ctx.fillStyle = 'rgba(240, 180, 100, 0.15)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add subtle cloud formations in the upper atmosphere
+  const cloudCount = 12;
+  for (let i = 0; i < cloudCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const width = Math.random() * 200 + 100;
+    const height = Math.random() * 40 + 20;
+    
+    ctx.fillStyle = `rgba(255, 220, 180, ${Math.random() * 0.15 + 0.05})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, width, height, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
