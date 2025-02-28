@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
-// Removed AnimatePresence import
 import planets, { dwarfPlanets } from './data/planets';
 import './App.css';
 
-// Lazy load components for better performance
+// Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'));
 const PlanetPage = lazy(() => import('./pages/PlanetPage'));
 
+/**
+ * Main application component with routing and navigation
+ */
 function App() {
   // State for the dwarf planet menu
   const [dwarfMenuOpen, setDwarfMenuOpen] = useState(false);
@@ -98,7 +100,6 @@ function App() {
         
         <main>
           <Suspense fallback={<div className="loading">Loading...</div>}>
-            {/* Removed AnimatePresence which could cause extra renders */}
             <Routes>
               <Route path="/" element={<Home planets={planets} />} />
               <Route 

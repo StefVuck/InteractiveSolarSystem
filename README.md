@@ -72,11 +72,21 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 
 ## Project Structure
 
-- `src/components/` - Reusable React components including 3D models and the fact system
-- `src/pages/` - Page components for the home page and individual planet pages
-- `src/data/` - Data files including planet information and astronomy facts
-- `App.jsx` - Main application component with routing configuration and navigation
-- `main.jsx` - Application entry point with WebGL configuration
+```
+src/
+├── components/
+│   ├── celestial/        # Celestial body components (planets, moons, etc.)
+│   ├── common/           # Shared UI components
+│   ├── pages/            # Page-level components
+│   ├── spacecraft/       # Spacecraft and satellite components
+│   └── OrbitingFacts.jsx # Astronomy facts display system
+├── data/                 # Data sources for planets and facts
+├── pages/                # Main route pages (Home, PlanetPage)
+├── utils/                # Utility functions for textures and calculations
+└── App.jsx               # Main application with routing
+```
+
+The modular component architecture makes the code more maintainable and easier to extend with new features.
 
 See the `STRUCTURE.md` file for detailed information on how to add new celestial bodies or modify existing ones.
 
@@ -103,3 +113,16 @@ The application has been optimized for stable WebGL performance by:
 
 ## License
 GPLv3
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
