@@ -17,7 +17,7 @@ const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" })
     for (let i = 0; i < safeCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const distance = innerRadius + Math.random() * (outerRadius - innerRadius);
-      const size = Math.random() * 0.1 + 0.05;
+      const size = Math.random() * 0.2 + 0.05;
       
       newAsteroids.push({
         id: i,
@@ -579,17 +579,17 @@ function Home({ planets }) {
   const getPlanetOrbitRadius = (index) => {
     // More spaced out orbits
     const distances = [
-      5,      // Mercury - closer to sun
-      7.5,    // Venus
-      10,     // Earth
-      13,     // Mars
-      21,     // Jupiter (after asteroid belt)
-      26,     // Saturn
-      32,     // Uranus
-      38      // Neptune
+      7.5,    // Mercury - closer to sun
+      11.25,  // Venus
+      15,     // Earth
+      19.5,   // Mars
+      31.5,   // Jupiter (after asteroid belt)
+      39,     // Saturn
+      48,     // Uranus
+      57      // Neptune
     ];
     
-    return distances[index] || (5 + index * 4);
+    return distances[index] || (7.5 + index * 6); // Also adjusted the fallback calculation
   };
   
   // Check if planet has rings
@@ -661,22 +661,22 @@ function Home({ planets }) {
         </mesh>
         
         {/* Background stars - minimal count for stability */}
-        <Stars radius={100} depth={50} count={800} factor={2} saturation={0} />
+        <Stars radius={100} depth={50} count={1500} factor={3} saturation={0} />
         
         {/* Asteroid Belts */}
         {/* Main Belt between Mars and Jupiter */}
         <AsteroidBelt 
-          innerRadius={16} 
-          outerRadius={19} 
-          count={40} 
+          innerRadius={24} 
+          outerRadius={28.5} 
+          count={140} 
           name="Main Asteroid Belt" 
         />
         
         {/* Kuiper Belt beyond Neptune */}
         <AsteroidBelt 
-          innerRadius={42} 
-          outerRadius={50} 
-          count={30} 
+          innerRadius={63} 
+          outerRadius={75} 
+          count={80} 
           name="Kuiper Belt" 
           color="#777777"
         />
