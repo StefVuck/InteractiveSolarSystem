@@ -3,7 +3,10 @@ import { useFrame } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 
-const Planet = forwardRef(function Planet({ position, color, size = 0.5, planetId, onClick, rotationSpeed = 0.01 }, ref) {
+const Planet = forwardRef((
+  { position, color, size = 0.5, planetId, onClick, rotationSpeed = 0.01 }, 
+  ref
+) => {
   const meshRef = useRef()
   const [hovered, setHovered] = useState(false)
   const materialRef = useRef()
@@ -79,6 +82,6 @@ const Planet = forwardRef(function Planet({ position, color, size = 0.5, planetI
       )}
     </group>
   )
-}
+})
 
 export default Planet

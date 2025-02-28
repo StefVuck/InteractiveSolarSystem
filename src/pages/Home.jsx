@@ -8,6 +8,107 @@ import OrbitingFacts from '../components/OrbitingFacts';
 import astronomyFacts from '../data/astronomyFacts';
 import { dwarfPlanets } from '../data/planets';
 
+// Spacecraft component with info dialog
+const Spacecraft = ({ position, name, description, icon }) => {
+  const [showDialog, setShowDialog] = useState(false);
+  const meshRef = useRef();
+  
+  // Toggle dialog visibility
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setShowDialog(!showDialog);
+  };
+  
+  // Close dialog when clicking outside
+  const handleCloseClick = (e) => {
+    e.stopPropagation();
+    setShowDialog(false);
+  };
+  
+  // Add slight rotation to make it more interesting
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.005;
+    }
+  });
+  
+  return (
+    <group position={position}>
+      {/* Spacecraft icon */}
+      <group ref={meshRef} onClick={handleClick}>
+        {icon ? icon : (
+          <mesh>
+            <boxGeometry args={[0.3, 0.1, 0.3]} />
+            <meshStandardMaterial color="#DDD" />
+          </mesh>
+        )}
+        
+        {/* Small gold antenna */}
+        <mesh position={[0.2, 0.05, 0]}>
+          <cylinderGeometry args={[0.01, 0.01, 0.2]} />
+          <meshStandardMaterial color="#FFD700" />
+        </mesh>
+        
+        {/* Enhanced glow */}
+        <pointLight position={[0, 0, 0]} intensity={1.5} distance={5} color="#88CCFF" />
+      </group>
+      
+      {/* Label always visible */}
+      <Text
+        position={[0, 0.3, 0]}
+        fontSize={0.2}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000"
+      >
+        {name}
+      </Text>
+      
+      {/* Dialog that appears when clicked */}
+      {showDialog && (
+        <Html position={[0, 0.6, 0]}>
+          <div style={{
+            background: 'rgba(0, 20, 40, 0.8)',
+            color: 'white',
+            padding: '0.8rem',
+            borderRadius: '0.5rem',
+            width: '280px',
+            boxShadow: '0 0 10px rgba(0, 100, 200, 0.5)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(100, 180, 255, 0.3)',
+            fontFamily: 'Arial, sans-serif',
+            position: 'relative'
+          }}>
+            <button
+              onClick={handleCloseClick}
+              style={{
+                position: 'absolute',
+                top: '0.5rem',
+                right: '0.5rem',
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '1rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <h3 style={{ 
+              margin: '0 0 0.5rem 0', 
+              borderBottom: '1px solid rgba(100, 180, 255, 0.5)',
+              paddingBottom: '0.3rem'
+            }}>{name}</h3>
+            <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>{description}</p>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
+
 // Asteroid Belt Component with visible particles
 const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" }) => {
   const [asteroids, setAsteroids] = useState([]);
@@ -1174,6 +1275,96 @@ function Home({ planets }) {
             </group>
           );
         })}
+        
+        {/* Voyager 1 - Position relative to Jupiter's distance */}
+        <Spacecraft
+          position={[
+            Math.cos(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5), // 2.5x Jupiter's distance
+            8, // Above the plane
+            Math.sin(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5)
+          ]}
+          name="Voyager 1"
+          description="Launched in 1977, Voyager 1 is the farthest human-made object from Earth. It has crossed into interstellar space in 2012 and continues to send back data from beyond our solar system. It carries the Golden Record, containing sounds and images of Earth for any extraterrestrial intelligence that might find it."
+          icon={
+            <group>
+              {/* Main body - Gold foil covered bus */}
+              <mesh>
+                <boxGeometry args={[0.3, 0.1, 0.3]} />
+                <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} />
+              </mesh>
+              
+              {/* Large dish antenna */}
+              <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI/2]}>
+                <cylinderGeometry args={[0.25, 0.25, 0.02, 16]} />
+                <meshStandardMaterial color="#CCC" emissive="#FFFFFF" emissiveIntensity={0.3} />
+              </mesh>
+              
+              {/* RTG power source */}
+              <mesh position={[-0.2, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
+                <meshStandardMaterial color="#555" emissive="#FF6622" emissiveIntensity={0.6} />
+              </mesh>
+              
+              {/* Additional outer glow spheres */}
+              <mesh>
+                <sphereGeometry args={[0.6, 8, 8]} />
+                <meshBasicMaterial color="#88CCFF" transparent={true} opacity={0.15} />
+              </mesh>
+              <mesh>
+                <sphereGeometry args={[1.0, 8, 8]} />
+                <meshBasicMaterial color="#88CCFF" transparent={true} opacity={0.07} />
+              </mesh>
+              
+              {/* Additional point light */}
+              <pointLight position={[0, 0, 0]} intensity={2} distance={15} color="#AADDFF" />
+            </group>
+          }
+        />
+        
+        {/* Voyager 2 - Position relative to Jupiter's distance, different direction */}
+        <Spacecraft
+          position={[
+            Math.cos(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2), // 2.2x Jupiter's distance
+            -6, // Below the plane
+            Math.sin(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2)
+          ]}
+          name="Voyager 2"
+          description="Launched in 1977, Voyager 2 is the only spacecraft to have visited all four gas giant planets: Jupiter, Saturn, Uranus, and Neptune. It crossed into interstellar space in 2018 and continues its journey outward. Like its twin, it carries the Golden Record with Earth's sounds and images."
+          icon={
+            <group>
+              {/* Main body - Gold foil covered bus */}
+              <mesh>
+                <boxGeometry args={[0.3, 0.1, 0.3]} />
+                <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} />
+              </mesh>
+              
+              {/* Large dish antenna */}
+              <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI/2]}>
+                <cylinderGeometry args={[0.25, 0.25, 0.02, 16]} />
+                <meshStandardMaterial color="#CCC" emissive="#FFFFFF" emissiveIntensity={0.3} />
+              </mesh>
+              
+              {/* RTG power source */}
+              <mesh position={[-0.2, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
+                <meshStandardMaterial color="#555" emissive="#FF6622" emissiveIntensity={0.6} />
+              </mesh>
+              
+              {/* Additional outer glow spheres - slightly different color tint */}
+              <mesh>
+                <sphereGeometry args={[0.6, 8, 8]} />
+                <meshBasicMaterial color="#88DDFF" transparent={true} opacity={0.15} />
+              </mesh>
+              <mesh>
+                <sphereGeometry args={[1.0, 8, 8]} />
+                <meshBasicMaterial color="#88DDFF" transparent={true} opacity={0.07} />
+              </mesh>
+              
+              {/* Additional point light - slightly different color tint */}
+              <pointLight position={[0, 0, 0]} intensity={2} distance={15} color="#AAEEFF" />
+            </group>
+          }
+        />
         
         <OrbitControls enableRotate={!isTransitioning} />
       </Canvas>

@@ -1,11 +1,140 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stars, Text } from '@react-three/drei';
+import { OrbitControls, Stars, Text, Html } from '@react-three/drei';
 import { useParams, useNavigate } from 'react-router-dom';
 // Removed framer-motion import
 import * as THREE from 'three';
 import OrbitingFacts from '../components/OrbitingFacts';
 import astronomyFacts from '../data/astronomyFacts';
+
+// ISS Component with information dialog
+const ISS = ({ orbitRadius = 3, orbitSpeed = 0.005 }) => {
+  const [angle, setAngle] = useState(0);
+  const [showDialog, setShowDialog] = useState(false);
+  const issRef = useRef();
+  
+  // Update orbital position
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAngle((prevAngle) => (prevAngle + orbitSpeed) % (Math.PI * 2));
+    }, 50);
+    
+    return () => clearInterval(interval);
+  }, [orbitSpeed]);
+  
+  // Get position
+  const x = Math.cos(angle) * orbitRadius;
+  const z = Math.sin(angle) * orbitRadius;
+  
+  // Toggle info dialog
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setShowDialog(!showDialog);
+  };
+  
+  // Close dialog
+  const handleCloseClick = (e) => {
+    e.stopPropagation();
+    setShowDialog(false);
+  };
+  
+  return (
+    <group>
+      {/* ISS orbit path */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[orbitRadius - 0.02, orbitRadius + 0.02, 64]} />
+        <meshBasicMaterial color="#777" transparent opacity={0.3} />
+      </mesh>
+      
+      {/* ISS model */}
+      <group 
+        ref={issRef} 
+        position={[x, 0, z]}
+        onClick={handleClick}
+      >
+        {/* Main truss */}
+        <mesh>
+          <boxGeometry args={[0.3, 0.01, 0.01]} />
+          <meshStandardMaterial color="#CCC" />
+        </mesh>
+        
+        {/* Solar panels */}
+        <mesh position={[-0.12, 0, 0]} rotation={[0, 0, Math.PI/2]}>
+          <boxGeometry args={[0.1, 0.01, 0.02]} />
+          <meshStandardMaterial color="#447" />
+        </mesh>
+        <mesh position={[0.12, 0, 0]} rotation={[0, 0, Math.PI/2]}>
+          <boxGeometry args={[0.1, 0.01, 0.02]} />
+          <meshStandardMaterial color="#447" />
+        </mesh>
+        
+        {/* Modules */}
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.04, 0.04, 0.04]} />
+          <meshStandardMaterial color="#AAA" />
+        </mesh>
+        
+        {/* Small point light for visibility */}
+        <pointLight intensity={0.3} distance={0.5} color="#88CCFF" />
+        
+        {/* Label */}
+        <Text
+          position={[0, 0.08, 0]}
+          fontSize={0.04}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.005}
+          outlineColor="#000000"
+        >
+          ISS
+        </Text>
+      </group>
+      
+      {/* Information dialog */}
+      {showDialog && (
+        <Html position={[x, 0.3, z]}>
+          <div style={{
+            background: 'rgba(0, 20, 40, 0.8)',
+            color: 'white',
+            padding: '0.8rem',
+            borderRadius: '0.5rem',
+            width: '280px',
+            boxShadow: '0 0 10px rgba(0, 100, 200, 0.5)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(100, 180, 255, 0.3)',
+            fontFamily: 'Arial, sans-serif',
+            position: 'relative'
+          }}>
+            <button
+              onClick={handleCloseClick}
+              style={{
+                position: 'absolute',
+                top: '0.5rem',
+                right: '0.5rem',
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '1rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <h3 style={{ 
+              margin: '0 0 0.5rem 0', 
+              borderBottom: '1px solid rgba(100, 180, 255, 0.5)',
+              paddingBottom: '0.3rem'
+            }}>International Space Station</h3>
+            <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+              The ISS is a modular space station in low Earth orbit. A joint project by five space agencies (NASA, Roscosmos, JAXA, ESA, and CSA), it orbits at approximately 400 km above Earth and travels at 28,000 km/h, completing 15.5 orbits per day. It has been continuously occupied since November 2000 and serves as a laboratory for scientific research in microgravity.
+            </p>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
 
 // Create Jupiter's texture with distinctive bands
 const createJupiterBandsTexture = () => {
@@ -170,16 +299,91 @@ const createDetailedRedSpotTexture = () => {
   return texture;
 };
 
-// Simplified orbiting Moon component
+// Create lunar surface texture with craters
+const createMoonTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - brighter white/gray
+  ctx.fillStyle = '#E8E8E8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add darker base regions for maria (lunar seas)
+  const maria = [
+    { x: 400, y: 200, radius: 120 }, // Mare Imbrium
+    { x: 550, y: 280, radius: 80 },  // Mare Serenitatis
+    { x: 600, y: 380, radius: 70 },  // Mare Tranquillitatis
+    { x: 650, y: 200, radius: 60 },  // Mare Frigoris
+    { x: 480, y: 350, radius: 90 },  // Mare Nubium
+  ];
+  
+  // Fill maria with slightly darker color - lighter than before
+  ctx.fillStyle = '#C0C0C0';
+  maria.forEach(mare => {
+    ctx.beginPath();
+    ctx.arc(mare.x, mare.y, mare.radius, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  // Add craters
+  const craters = 100;
+  for (let i = 0; i < craters; i++) {
+    const size = Math.random() * 30 + 5;
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    
+    // Crater outer rim - slightly brighter
+    ctx.fillStyle = '#DDDDDD';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater inner area - darker
+    ctx.fillStyle = '#999999';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater floor - darkest
+    ctx.fillStyle = '#888888';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some small craters for detail
+  for (let i = 0; i < 200; i++) {
+    const size = Math.random() * 8 + 1;
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    
+    // Small crater with simple design
+    ctx.fillStyle = '#999999';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+// Enhanced orbiting Moon component with crater texture
 const Moon = () => {
   const moonRef = useRef();
   const [angle, setAngle] = useState(0);
-  const orbitRadius = 4;
+  const orbitRadius = 6; // Increased from 4 to 6 for more distance
+  
+  // Create moon texture with craters
+  const moonTexture = useMemo(() => createMoonTexture(), []);
   
   // Simple orbit update using useState instead of useFrame
   useEffect(() => {
     const interval = setInterval(() => {
-      setAngle((prevAngle) => (prevAngle + 0.01) % (Math.PI * 2));
+      setAngle((prevAngle) => (prevAngle + 0.008) % (Math.PI * 2)); // Slightly slower rotation
     }, 50); // Update every 50ms for smoother animation
     
     return () => clearInterval(interval);
@@ -189,11 +393,32 @@ const Moon = () => {
   const x = Math.cos(angle) * orbitRadius;
   const z = Math.sin(angle) * orbitRadius;
   
+  // Update rotation to face Earth
+  useFrame(() => {
+    if (moonRef.current) {
+      moonRef.current.rotation.y += 0.001; // Slow rotation
+    }
+  });
+  
   return (
-    <mesh ref={moonRef} position={[x, 0, z]}>
-      <sphereGeometry args={[0.5, 16, 16]} />
-      <meshBasicMaterial color="#C0C0C0" />
-    </mesh>
+    <group>
+      {/* Main moon with crater texture */}
+      <mesh ref={moonRef} position={[x, 0, z]}>
+        <sphereGeometry args={[0.5, 32, 32]} /> {/* Increased detail */}
+        <meshStandardMaterial 
+          map={moonTexture}
+          color="#F0F0F0" // Much brighter/whiter color
+          roughness={0.8}
+          metalness={0.2}
+          bumpScale={0.05}
+          emissive="#FFFFFF" // Add slight glow
+          emissiveIntensity={0.05} // Subtle emissive effect
+        />
+      </mesh>
+      
+      {/* Small point light to make the moon glow slightly */}
+      <pointLight position={[x, 0, z]} intensity={0.2} distance={2} color="#FFFFFF" />
+    </group>
   );
 };
 
@@ -357,6 +582,7 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   const isEarth = planetId === 'earth';
   const isJupiter = planetId === 'jupiter';
   const isSaturn = planetId === 'saturn';
+  const isDwarfPlanet = ['pluto', 'ceres', 'haumea', 'makemake'].includes(planetId);
   
   // Create textures based on planet type
   const jupiterTexture = useMemo(() => {
@@ -661,9 +887,83 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
     return texture;
   };
   
+  // Create simple texture for dwarf planets
+  const createDwarfPlanetTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    // Base color
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add some basic features based on which dwarf planet
+    if (planetId === 'pluto') {
+      // Create Pluto's heart-shaped region (Tombaugh Regio)
+      ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath();
+      // Draw simplified heart shape
+      ctx.arc(canvas.width/2-100, canvas.height/2, 100, 0, Math.PI, true);
+      ctx.arc(canvas.width/2+100, canvas.height/2, 100, 0, Math.PI, true);
+      ctx.bezierCurveTo(
+        canvas.width/2+200, canvas.height/2+100,
+        canvas.width/2, canvas.height/2+200,
+        canvas.width/2-200, canvas.height/2+100
+      );
+      ctx.fill();
+    } else if (planetId === 'ceres') {
+      // Add some crater-like features
+      for (let i = 0; i < 30; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const radius = Math.random() * 30 + 10;
+        
+        ctx.fillStyle = `rgba(100, 100, 100, 0.3)`;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (planetId === 'haumea') {
+      // For Haumea's elongated shape, we'll simulate it with shading
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      gradient.addColorStop(0, 'rgba(0,0,0,0.4)');
+      gradient.addColorStop(0.3, 'rgba(255,255,255,0.1)');
+      gradient.addColorStop(0.7, 'rgba(255,255,255,0.1)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0.4)');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (planetId === 'makemake') {
+      // Reddish surface features
+      for (let i = 0; i < 40; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const radius = Math.random() * 40 + 20;
+        
+        ctx.fillStyle = `rgba(150, 80, 50, 0.2)`;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // Create a texture from the canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+  };
+  
+  // Create dwarf planet texture if needed
+  const dwarfPlanetTexture = useMemo(() => {
+    if (isDwarfPlanet) {
+      return createDwarfPlanetTexture();
+    }
+    return null;
+  }, [isDwarfPlanet, planetId, color]);
+  
   // Create vertex displacement for surface detail
   useEffect(() => {
-    if (meshRef.current && !isEarth) {  // Skip for Earth as it uses textures
+    if (meshRef.current && !isEarth && !isDwarfPlanet) {  // Skip for Earth and dwarf planets
       const geometry = meshRef.current.geometry;
       const positionAttribute = geometry.getAttribute('position');
       const vertex = new THREE.Vector3();
@@ -704,7 +1004,7 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
       
       geometry.computeVertexNormals();
     }
-  }, [planetId, isEarth]);
+  }, [planetId, isEarth, isDwarfPlanet]);
   
   // Rotate the planet
   useFrame((state) => {
@@ -718,7 +1018,11 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
         'earth': 0.004,   // Slower
         'mars': 0.004,    // Similar to Earth
         'venus': -0.001,  // Very slow, retrograde rotation
-        'mercury': 0.002  // Very slow
+        'mercury': 0.002, // Very slow
+        'pluto': 0.001,   // Very slow rotation
+        'ceres': 0.003,   // Medium-slow rotation
+        'haumea': 0.01,   // Fast rotation (in reality, Haumea rotates very quickly)
+        'makemake': 0.002 // Slow rotation
       };
       
       meshRef.current.rotation.y += rotationSpeeds[planetId] || 0.005;
@@ -726,6 +1030,11 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
       // Add a slight wobble for gas giants
       if (['jupiter', 'saturn'].includes(planetId)) {
         meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.02;
+      }
+      
+      // Add more pronounced wobble for Haumea, the egg-shaped dwarf planet
+      if (planetId === 'haumea') {
+        meshRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
       }
       
       // Simplified day/night cycle
@@ -748,12 +1057,24 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   
   // Get size for the planet
   const getSize = () => {
-    return 2; // All planets are same size in detail view
+    // Dwarf planets are smaller
+    if (isDwarfPlanet) {
+      const sizes = {
+        'pluto': 1.3,
+        'ceres': 1.0,
+        'haumea': 1.1,
+        'makemake': 1.2
+      };
+      return sizes[planetId] || 1.0;
+    }
+    return 2; // Regular planets are same size in detail view
   };
   
   // Configure detail level based on planet
   const getDetailLevel = () => {
-    return planetId === 'earth' ? 64 : 3; // Higher resolution sphere for Earth
+    if (planetId === 'earth') return 64; // Higher resolution sphere for Earth
+    if (isDwarfPlanet) return 32; // Good resolution for dwarf planets
+    return 3; // Lower polygon count for other planets with displacement
   };
   
   // Determine if planet has rings
@@ -832,17 +1153,20 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
             />
           </mesh>
           
+          {/* International Space Station */}
+          <ISS orbitRadius={2.5} orbitSpeed={0.01} />
+          
           {/* Static Moon */}
           <Moon />
           
           {/* Moon orbit path */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[4 - 0.05, 4 + 0.05, 32]} />
+            <ringGeometry args={[6 - 0.05, 6 + 0.05, 64]} />
             <meshBasicMaterial color="#444444" transparent opacity={0.3} />
           </mesh>
 
           {/* Moon button */}
-          <group position={[0, 3.5, 0]}>
+          <group position={[0, 4.5, 0]}>
             <mesh onClick={(e) => {
               e.stopPropagation();
               if (onMoonClick) onMoonClick();
@@ -871,6 +1195,19 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
             metalness={0.2}
             emissive="#E3B982"
             emissiveIntensity={0.1}
+          />
+        </mesh>
+      ) : isDwarfPlanet ? (
+        // Dwarf planets with simplified texture
+        <mesh ref={meshRef}>
+          <sphereGeometry args={[getSize(), 32, 32]} />
+          <meshStandardMaterial 
+            map={dwarfPlanetTexture}
+            color={color}
+            emissive={color} 
+            emissiveIntensity={0.2}
+            roughness={0.7}
+            metalness={0.3}
           />
         </mesh>
       ) : (
@@ -918,7 +1255,49 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   );
 };
 
-// Moon page with more 3D-like styling to match other pages
+// Moon component for the 3D canvas
+const Moon3D = () => {
+  const moonRef = useRef();
+  
+  // Use the same createMoonTexture function we defined earlier
+  const moonTexture = useMemo(() => createMoonTexture(), []);
+  
+  // Slowly rotate the moon
+  useFrame(() => {
+    if (moonRef.current) {
+      moonRef.current.rotation.y += 0.002;
+    }
+  });
+  
+  return (
+    <group>
+      <mesh ref={moonRef}>
+        <sphereGeometry args={[2.2, 64, 64]} /> {/* Larger size for detail view */}
+        <meshStandardMaterial 
+          map={moonTexture}
+          color="#F0F0F0" // Very bright white
+          roughness={0.7}
+          metalness={0.3}
+          emissive="#FFFFFF" 
+          emissiveIntensity={0.1} // Subtle glow
+        />
+      </mesh>
+      
+      {/* Subtle ambient glow around the moon */}
+      <mesh scale={[1.05, 1.05, 1.05]}>
+        <sphereGeometry args={[2.2, 32, 32]} />
+        <meshBasicMaterial 
+          color="#FFFFFF" 
+          transparent={true} 
+          opacity={0.07} 
+          side={THREE.BackSide}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+// Enhanced 3D Moon page using a separate canvas component
 const MoonPage = ({ onBackClick }) => {
   return (
     <div className="planet-page moon-page">
@@ -930,61 +1309,33 @@ const MoonPage = ({ onBackClick }) => {
         </button>
       </div>
       
-      <div style={{ width: '100%', height: 'calc(100vh - 140px)', backgroundColor: '#000', overflow: 'hidden', position: 'relative' }}>
-        {/* Stars background */}
-        {Array.from({ length: 200 }, (_, i) => (
-          <div 
-            key={i}
-            style={{
-              position: 'absolute',
-              width: `${Math.random() * 2 + 1}px`,
-              height: `${Math.random() * 2 + 1}px`,
-              backgroundColor: '#fff',
-              borderRadius: '50%',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.8 + 0.2
-            }}
+      <div style={{ width: '100%', height: 'calc(100vh - 140px)' }}>
+        <Canvas 
+          camera={{ position: [0, 0, 5], fov: 45 }}
+          gl={{ 
+            powerPreference: 'default', 
+            antialias: true,
+            depth: true
+          }}>
+          {/* Ambient and directional lights */}
+          <ambientLight intensity={0.4} />
+          <pointLight position={[10, 10, 10]} intensity={0.6} color="#FFFFFF" />
+          <pointLight position={[-10, -10, -10]} intensity={0.2} color="#C0C8FF" />
+          
+          {/* Moon 3D component */}
+          <Moon3D />
+          
+          {/* Small distant stars */}
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
+          
+          {/* Controls */}
+          <OrbitControls 
+            autoRotate={false} 
+            enablePan={false}
+            minDistance={3.5}
+            maxDistance={10}
           />
-        ))}
-        
-        {/* Moon with craters */}
-        <div style={{ 
-          position: 'absolute', 
-          left: '50%', 
-          top: '50%', 
-          transform: 'translate(-50%, -50%)', 
-          width: '300px',
-          height: '300px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #DDDDDD 10%, #AAAAAA 70%, #888888 100%)',
-          boxShadow: '0 0 20px 5px rgba(255,255,255,0.3)'
-        }}>
-          {/* Render some craters */}
-          {Array.from({ length: 20 }, (_, i) => {
-            const size = Math.random() * 30 + 10;
-            const left = Math.random() * 80 + 10; 
-            const top = Math.random() * 80 + 10;
-            const opacity = Math.random() * 0.2 + 0.1;
-            
-            return (
-              <div 
-                key={i}
-                style={{
-                  position: 'absolute',
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  borderRadius: '50%',
-                  backgroundColor: '#888',
-                  left: `${left}%`,
-                  top: `${top}%`,
-                  opacity,
-                  boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)'
-                }}
-              />
-            );
-          })}
-        </div>
+        </Canvas>
       </div>
     </div>
   );
@@ -1042,12 +1393,12 @@ function PlanetPage({ planets }) {
               <pointLight position={[5, 5, 5]} intensity={1.2} color="#FFF8E0" />
               <pointLight position={[-5, -5, -5]} intensity={0.3} color="#C0C8FF" />
               
-              {/* Add distant sun glow */}
-              <mesh position={[15, 8, 15]}>
-                <sphereGeometry args={[2, 16, 16]} />
+              {/* Add distant sun glow - moved farther away */}
+              <mesh position={[25, 15, 25]}>
+                <sphereGeometry args={[3, 24, 24]} />
                 <meshBasicMaterial color="#FFFF88" />
               </mesh>
-              <pointLight position={[15, 8, 15]} intensity={0.8} distance={30} />
+              <pointLight position={[25, 15, 25]} intensity={1.2} distance={50} />
               
               {/* Atmospheric glow for some planets */}
               {['venus', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(planet.id) && (
