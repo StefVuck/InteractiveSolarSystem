@@ -102,5 +102,4 @@ The application has been optimized for stable WebGL performance by:
 - Separating complex rendering into dedicated components
 
 ## License
-
-MIT
+GPLv3
