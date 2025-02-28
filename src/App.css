@@ -303,7 +303,15 @@ nav a.active .dropdown-indicator {
 }
 
 .moons-dropdown[data-planet-id="jupiter"] {
-  left: 670px;
+  left: 682px;
+}
+
+.moons-dropdown[data-planet-id="saturn"] {
+  left: 824 px;
+}
+
+.moons-dropdown[data-planet-id="mars"] {
+  left: 560px;
 }
 
 .moons-dropdown ul {
