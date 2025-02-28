@@ -16,11 +16,23 @@ function App() {
         <nav>
           <ul>
             <li>
-              <Link to="/">Solar System</Link>
+              <Link to="/">
+                <span className="solar-system-icon"></span>
+                Solar System
+              </Link>
             </li>
             {planets.map(planet => (
               <li key={planet.id}>
-                <Link to={`/planet/${planet.id}`}>{planet.name}</Link>
+                <Link to={`/planet/${planet.id}`}>
+                  <span 
+                    className="planet-icon" 
+                    style={{ 
+                      backgroundColor: planet.color,
+                      boxShadow: planet.id === 'saturn' ? `0 0 8px ${planet.color}` : 'none'
+                    }}
+                  ></span>
+                  {planet.name}
+                </Link>
               </li>
             ))}
           </ul>
