@@ -4,6 +4,8 @@ import { OrbitControls, Stars, Text } from '@react-three/drei';
 import { useParams, useNavigate } from 'react-router-dom';
 // Removed framer-motion import
 import * as THREE from 'three';
+import OrbitingFacts from '../components/OrbitingFacts';
+import astronomyFacts from '../data/astronomyFacts';
 
 // Simplified orbiting Moon component
 const Moon = () => {
@@ -704,6 +706,16 @@ function PlanetPage({ planets }) {
                 color={planet.color} 
                 planetId={planet.id} 
                 onMoonClick={planet.id === 'earth' ? handleMoonClick : undefined} 
+              />
+              
+              {/* Filter facts for this planet */}
+              <OrbitingFacts 
+                facts={astronomyFacts.filter(fact => 
+                  fact.toLowerCase().includes(planet.id.toLowerCase()) || 
+                  fact.toLowerCase().includes(planet.name.toLowerCase())
+                )} 
+                maxActive={3} 
+                scene="planet-detail" 
               />
               
               <Stars radius={100} depth={50} count={500} factor={2} />

@@ -4,6 +4,8 @@ import { OrbitControls, Stars, Text, Html } from '@react-three/drei';
 import { useNavigate } from 'react-router-dom';
 // Removed framer-motion import
 import * as THREE from 'three';
+import OrbitingFacts from '../components/OrbitingFacts';
+import astronomyFacts from '../data/astronomyFacts';
 
 // Asteroid Belt Component with visible particles
 const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" }) => {
@@ -58,7 +60,7 @@ const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" })
       </Html>
     
       {/* Individual asteroids - limit to 50 for performance */}
-      {asteroids.slice(0, 50).map(asteroid => {
+      {asteroids.map(asteroid => {
         const x = Math.cos(asteroid.angle) * asteroid.distance;
         const z = Math.sin(asteroid.angle) * asteroid.distance;
         
@@ -680,6 +682,9 @@ function Home({ planets }) {
           name="Kuiper Belt" 
           color="#777777"
         />
+        
+        {/* Orbiting Facts */}
+        <OrbitingFacts facts={astronomyFacts} maxActive={5} scene="solar-system" />
         
         {/* Orbit rings */}
         {planets.map((planet, index) => {
