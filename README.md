@@ -8,7 +8,9 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Scientifically accurate planet models with custom textures and features:
   - Earth with realistic continents, clouds, orbiting moon, and International Space Station
   - Jupiter with animated cloud bands, the Great Red Spot, and all four Galilean moons (Io, Europa, Ganymede, Callisto)
-  - Saturn with detailed ring system showing gaps and particle distribution
+  - Saturn with detailed ring system showing gaps and particle distribution, and Titan moon with orange atmosphere
+  - Mars with cratered surface and two irregular moons (Phobos with Stickney crater and smaller Deimos)
+  - Pluto with Charon moon featuring its distinctive Mordor Macula (reddish north polar region)
   - Uranus with vertical ring system
 - Properly spaced orbital distances following astronomical scales
 - Asteroid belts (Main Belt between Mars and Jupiter, Kuiper Belt beyond Neptune)
@@ -55,8 +57,11 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Click on Voyager spacecraft to see information about their missions
 - On Earth's page, you can see the ISS orbiting and visit the detailed Moon page
 - On Jupiter's page, you can see all four Galilean moons orbiting and explore their details
+- On Saturn's page, you can explore Titan with its distinctive orange atmosphere and methane lakes
+- On Mars' page, you can see its two irregularly shaped moons, Phobos and Deimos
+- On Pluto's page, you can see its large moon Charon, which forms a binary system with Pluto
 - Use the navigation menu at the top with planetary icons to quickly jump to any planet
-- Click once on planets with moons (Earth and Jupiter) to open a dropdown menu of their moons
+- Click once on planets with moons (Earth, Jupiter, Saturn, Mars, and Pluto) to open a dropdown menu of their moons
 - Double-click on these planets to go directly to the planet page
 - On individual planet pages, you can rotate and zoom in/out to explore the 3D models
 - Look for interesting facts orbiting in the system - they periodically change!

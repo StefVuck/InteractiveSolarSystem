@@ -9,7 +9,10 @@ import {
   createGanymedeTexture,
   createCallistoTexture,
   createMoonTexture,
-  createTitanTexture
+  createTitanTexture,
+  createPhobosTexture,
+  createDeimosTexture,
+  createCharonTexture
 } from '../../utils/textureGenerators';
 
 /**
@@ -40,6 +43,12 @@ const MoonDetailPage = ({ planets, onBackClick, parentPlanetId: propParentId, pa
     } else if (['titan'].includes(moonId)) {
       setParentPlanetId('saturn');
       setParentPlanetName('Saturn');
+    } else if (['phobos', 'deimos'].includes(moonId)) {
+      setParentPlanetId('mars');
+      setParentPlanetName('Mars');
+    } else if (['charon'].includes(moonId)) {
+      setParentPlanetId('pluto');
+      setParentPlanetName('Pluto');
     }
   }, [moonId]);
   
@@ -105,6 +114,35 @@ const MoonDetailPage = ({ planets, onBackClick, parentPlanetId: propParentId, pa
       };
     }
     
+    // Mars' moons
+    if (moonId === 'phobos') {
+      return {
+        name: 'Phobos',
+        description: "The larger and innermost of Mars' two moons. Phobos is heavily cratered and has a distinctive large impact crater called Stickney. It orbits extremely close to Mars and completes an orbit in less than 8 hours. Due to tidal forces, Phobos is slowly spiraling inward toward Mars and will eventually either crash into the planet or break apart into a ring in about 50 million years. Its irregular shape and grooved surface suggest it may be a captured asteroid.",
+        color: '#8F7A6A',
+        textureGenerator: createPhobosTexture
+      };
+    }
+    
+    if (moonId === 'deimos') {
+      return {
+        name: 'Deimos',
+        description: "The smaller and outermost of Mars' two moons. Deimos has a smoother appearance with fewer craters than Phobos, suggesting a younger surface. Like Phobos, it is thought to be a captured asteroid with a composition similar to C-type or D-type asteroids. Deimos orbits Mars about every 30 hours and is gradually spiraling away from the planet, similar to how Earth's Moon is slowly moving away from Earth.",
+        color: '#9A8A7A',
+        textureGenerator: createDeimosTexture
+      };
+    }
+    
+    // Pluto's moon
+    if (moonId === 'charon') {
+      return {
+        name: 'Charon',
+        description: "Pluto's largest moon, discovered in 1978, which has a diameter just over half that of Pluto. Charon is so large relative to Pluto that the system's center of mass lies outside Pluto, making them a true binary system where they orbit a point in space between them. Charon's surface features a distinctive reddish north polar region known as Mordor Macula, as well as canyons, mountains, and craters. The New Horizons mission in 2015 provided the first detailed images of this distant world.",
+        color: '#B8BCC0',
+        textureGenerator: createCharonTexture
+      };
+    }
+    
     // Log if we're falling back to default case
     console.log('Using default case for moon:', moonId);
     
@@ -152,25 +190,112 @@ const MoonDetailPage = ({ planets, onBackClick, parentPlanetId: propParentId, pa
           <pointLight position={[10, 10, 10]} intensity={0.6} color="#FFFFFF" />
           <pointLight position={[-10, -10, -10]} intensity={0.2} color="#C0C8FF" />
           
-          {/* Moon with texture */}
-          <mesh rotation={[0, 0, 0]}>
-            <sphereGeometry args={[2, 64, 64]} />
-            <meshStandardMaterial 
-              map={texture}
-              color={moonData.color}
-              roughness={0.8}
-              metalness={0.2}
-              bumpScale={0.05}
-            />
-          </mesh>
+          {/* Moon with texture - handle irregular shapes differently */}
+          {moonId === 'phobos' || moonId === 'deimos' ? (
+            // Irregular shape for Phobos and Deimos
+            <group rotation={[0, 0, 0]}>
+              {/* Main body with low poly for lumpy appearance */}
+              <mesh>
+                <icosahedronGeometry args={[2, 1]} /> {/* Low poly count for irregular shape */}
+                <meshStandardMaterial 
+                  map={texture}
+                  color={moonData.color}
+                  roughness={0.9}
+                  metalness={0.1}
+                  bumpScale={0.2}
+                  flatShading={true}
+                />
+              </mesh>
+              
+              {/* Additional lumps for Phobos */}
+              {moonId === 'phobos' && (
+                <>
+                  {/* Large Stickney crater depression */}
+                  <mesh position={[-1.2, 0.5, 0.7]} rotation={[0.2, 0.5, 0.1]}>
+                    <sphereGeometry args={[0.9, 16, 16]} />
+                    <meshStandardMaterial 
+                      map={texture}
+                      color={moonData.color}
+                      roughness={0.9}
+                      metalness={0.1}
+                      side={THREE.BackSide}
+                      flatShading={true}
+                    />
+                  </mesh>
+                  
+                  {/* Additional lumps to create potato shape */}
+                  <mesh position={[1.0, 0.3, 0.2]} rotation={[0.3, 0.7, 0.4]}>
+                    <sphereGeometry args={[1.1, 8, 8]} />
+                    <meshStandardMaterial 
+                      map={texture}
+                      color={moonData.color}
+                      roughness={0.9}
+                      metalness={0.1}
+                      flatShading={true}
+                    />
+                  </mesh>
+                  
+                  <mesh position={[-0.7, -0.5, -0.8]} rotation={[0.5, 0.2, 0.6]}>
+                    <sphereGeometry args={[0.8, 8, 8]} />
+                    <meshStandardMaterial 
+                      map={texture}
+                      color={moonData.color}
+                      roughness={0.9}
+                      metalness={0.1}
+                      flatShading={true}
+                    />
+                  </mesh>
+                </>
+              )}
+              
+              {/* More subtle lumps for Deimos */}
+              {moonId === 'deimos' && (
+                <>
+                  <mesh position={[0.8, 0.6, 0.3]} rotation={[0.1, 0.2, 0.3]}>
+                    <sphereGeometry args={[1.0, 8, 8]} />
+                    <meshStandardMaterial 
+                      map={texture}
+                      color={moonData.color}
+                      roughness={0.8}
+                      metalness={0.1}
+                      flatShading={true}
+                    />
+                  </mesh>
+                  
+                  <mesh position={[-0.5, -0.3, 0.5]} rotation={[0.4, 0.3, 0.1]}>
+                    <sphereGeometry args={[0.9, 8, 8]} />
+                    <meshStandardMaterial 
+                      map={texture}
+                      color={moonData.color}
+                      roughness={0.8}
+                      metalness={0.1}
+                      flatShading={true}
+                    />
+                  </mesh>
+                </>
+              )}
+            </group>
+          ) : (
+            // Regular spherical shape for other moons
+            <mesh rotation={[0, 0, 0]}>
+              <sphereGeometry args={[2, 64, 64]} />
+              <meshStandardMaterial 
+                map={texture}
+                color={moonData.color}
+                roughness={0.8}
+                metalness={0.2}
+                bumpScale={0.05}
+              />
+            </mesh>
+          )}
           
-          {/* Subtle glow effect layer */}
+          {/* Enhanced glow effect layer */}
           <mesh>
-            <sphereGeometry args={[2.3, 32, 32]} />
+            <sphereGeometry args={[2.5, 32, 32]} />
             <meshBasicMaterial
               color={moonData.color}
               transparent={true}
-              opacity={0.08}
+              opacity={moonId === 'phobos' || moonId === 'deimos' ? 0.15 : 0.08}
               side={THREE.BackSide}
               depthWrite={false}
             />
@@ -178,11 +303,11 @@ const MoonDetailPage = ({ planets, onBackClick, parentPlanetId: propParentId, pa
           
           {/* Second closer glow layer */}
           <mesh>
-            <sphereGeometry args={[2.15, 48, 48]} />
+            <sphereGeometry args={[2.25, 48, 48]} />
             <meshBasicMaterial
               color={moonData.color}
               transparent={true}
-              opacity={0.12}
+              opacity={moonId === 'phobos' || moonId === 'deimos' ? 0.2 : 0.12}
               side={THREE.BackSide}
               depthWrite={false}
             />

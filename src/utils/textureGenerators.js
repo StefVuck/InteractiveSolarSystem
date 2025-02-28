@@ -1171,3 +1171,333 @@ export const createTitanTexture = () => {
   const texture = new THREE.CanvasTexture(canvas);
   return texture;
 };
+
+/**
+ * Creates a texture for Phobos (Mars' largest moon)
+ * Heavily cratered, irregularly shaped body
+ */
+export const createPhobosTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - lightened reddish-gray for better visibility
+  ctx.fillStyle = '#BFA698';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add the Stickney crater - largest feature on Phobos
+  const stickneyX = canvas.width * 0.25;
+  const stickneyY = canvas.height * 0.4;
+  const stickneySize = canvas.width * 0.18; // Very large crater
+  
+  // Crater outer rim
+  ctx.fillStyle = '#75655A';
+  ctx.beginPath();
+  ctx.arc(stickneyX, stickneyY, stickneySize, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Crater inner area
+  ctx.fillStyle = '#5A4D45';
+  ctx.beginPath();
+  ctx.arc(stickneyX, stickneyY, stickneySize * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Crater floor
+  ctx.fillStyle = '#4A413C';
+  ctx.beginPath();
+  ctx.arc(stickneyX, stickneyY, stickneySize * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Add grooves/striations (unique to Phobos)
+  const grooveCount = 15;
+  for (let i = 0; i < grooveCount; i++) {
+    const startX = Math.random() * canvas.width;
+    const startY = Math.random() * canvas.height;
+    const length = 50 + Math.random() * 200;
+    const angle = Math.random() * Math.PI;
+    
+    // Calculate end point
+    const endX = startX + Math.cos(angle) * length;
+    const endY = startY + Math.sin(angle) * length;
+    
+    // Draw groove
+    ctx.strokeStyle = `rgba(100, 90, 80, ${Math.random() * 0.4 + 0.3})`;
+    ctx.lineWidth = 2 + Math.random() * 4;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+  
+  // Add many small craters
+  const smallCraterCount = 250;
+  for (let i = 0; i < smallCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 10 + 3;
+    
+    // Avoid placing craters inside Stickney
+    const distToStickney = Math.sqrt(Math.pow(x - stickneyX, 2) + Math.pow(y - stickneyY, 2));
+    if (distToStickney < stickneySize * 0.6) continue;
+    
+    // Crater rim
+    ctx.fillStyle = '#7A6A5F';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater interior
+    ctx.fillStyle = '#5F5347';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some larger craters
+  const largeCraterCount = 30;
+  for (let i = 0; i < largeCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 25 + 10;
+    
+    // Avoid placing large craters inside Stickney
+    const distToStickney = Math.sqrt(Math.pow(x - stickneyX, 2) + Math.pow(y - stickneyY, 2));
+    if (distToStickney < stickneySize * 0.8) continue;
+    
+    // Crater rim
+    ctx.fillStyle = '#8A7A6F';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater wall
+    ctx.fillStyle = '#6F635A';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater floor
+    ctx.fillStyle = '#5A4F48';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add slightly darker edge to create irregular shape appearance
+  const gradient = ctx.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.5
+  );
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+/**
+ * Creates a texture for Deimos (Mars' smaller moon)
+ * Smaller, less cratered moon with smoother appearance
+ */
+export const createDeimosTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - lightened grayish-brown for better visibility
+  ctx.fillStyle = '#CDB9A8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add subtle regional variations
+  const regionCount = 6;
+  for (let i = 0; i < regionCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 150 + 100;
+    
+    // Slightly different shades of the base color
+    const brightness = Math.random() * 20 - 10;
+    ctx.fillStyle = `rgb(${154 + brightness}, ${138 + brightness}, ${122 + brightness})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add medium craters - fewer than Phobos
+  const mediumCraterCount = 70;
+  for (let i = 0; i < mediumCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 15 + 5;
+    
+    // Crater rim
+    ctx.fillStyle = '#A59080';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater interior
+    ctx.fillStyle = '#857060';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some small craters
+  const smallCraterCount = 150;
+  for (let i = 0; i < smallCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 5 + 2;
+    
+    // Simple small craters
+    ctx.fillStyle = '#7A6A60';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some brighter and darker patches for regolith variations
+  const patchCount = 30;
+  for (let i = 0; i < patchCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 40 + 20;
+    const brightness = Math.random() > 0.5;
+    
+    // Alternately add brighter and darker patches
+    ctx.fillStyle = brightness 
+      ? `rgba(180, 170, 160, ${Math.random() * 0.2 + 0.1})` 
+      : `rgba(80, 70, 60, ${Math.random() * 0.15 + 0.1})`;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Slight vignette to create irregular shape illusion
+  const gradient = ctx.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.5
+  );
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+/**
+ * Creates a texture for Charon (Pluto's largest moon)
+ * Characterized by a dark reddish north polar region (Mordor Macula)
+ */
+export const createCharonTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - grayish with slight blue tint
+  ctx.fillStyle = '#B8BCC0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Create Mordor Macula (dark reddish north polar region)
+  const mordorX = canvas.width / 2;
+  const mordorY = canvas.height * 0.2; // North pole region
+  const mordorRadius = canvas.width * 0.3;
+  
+  // Create gradient for smooth edges
+  const mordorGradient = ctx.createRadialGradient(
+    mordorX, mordorY, 0,
+    mordorX, mordorY, mordorRadius
+  );
+  mordorGradient.addColorStop(0, 'rgba(100, 50, 50, 0.9)');
+  mordorGradient.addColorStop(0.7, 'rgba(120, 60, 60, 0.7)');
+  mordorGradient.addColorStop(1, 'rgba(140, 80, 80, 0)');
+  
+  ctx.fillStyle = mordorGradient;
+  ctx.beginPath();
+  ctx.arc(mordorX, mordorY, mordorRadius, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Create large impact craters
+  const craterCount = 12;
+  for (let i = 0; i < craterCount; i++) {
+    // Avoid putting craters in Mordor Macula (north polar region)
+    let x, y, distToMordor;
+    do {
+      x = Math.random() * canvas.width;
+      y = Math.random() * canvas.height;
+      distToMordor = Math.sqrt(Math.pow(x - mordorX, 2) + Math.pow(y - mordorY, 2));
+    } while (distToMordor < mordorRadius * 0.7);
+    
+    const size = Math.random() * 40 + 20;
+    
+    // Crater rim - slightly brighter than base
+    ctx.fillStyle = '#CDD1D6';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater depression - slightly darker than base
+    ctx.fillStyle = '#A0A4A8';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crater center - darker
+    ctx.fillStyle = '#909498';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add some smaller craters
+  const smallCraterCount = 80;
+  for (let i = 0; i < smallCraterCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 15 + 5;
+    
+    // Small crater - simple design
+    const brightness = Math.random() < 0.5 ? '#A0A4A8' : '#CDD1D6';
+    ctx.fillStyle = brightness;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add terrain variation - subtle lighter and darker patches
+  const patchCount = 15;
+  for (let i = 0; i < patchCount; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 100 + 50;
+    
+    // Random light or dark patch with low opacity
+    const brightness = Math.random() < 0.5 ? 
+      'rgba(200, 205, 210, 0.15)' : 
+      'rgba(150, 155, 160, 0.15)';
+    
+    ctx.fillStyle = brightness;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};

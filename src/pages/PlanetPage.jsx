@@ -47,7 +47,7 @@ function PlanetPage({ planets }) {
   
   // Determines if current planet should have moons system
   const hasMoons = (planetId) => {
-    return ['earth', 'jupiter', 'saturn'].includes(planetId);
+    return ['earth', 'jupiter', 'saturn', 'mars', 'pluto'].includes(planetId);
   };
   
   return (
@@ -128,6 +128,8 @@ function PlanetPage({ planets }) {
               {planet.id === 'earth' && <Moon />}
               {planet.id === 'jupiter' && <PlanetaryMoons planetId="jupiter" onMoonClick={handleMoonClick} />}
               {planet.id === 'saturn' && <PlanetaryMoons planetId="saturn" onMoonClick={handleMoonClick} />}
+              {planet.id === 'mars' && <PlanetaryMoons planetId="mars" onMoonClick={handleMoonClick} />}
+              {planet.id === 'pluto' && <PlanetaryMoons planetId="pluto" onMoonClick={handleMoonClick} />}
               
               {/* Moon visit button for Earth */}
               {planet.id === 'earth' && (

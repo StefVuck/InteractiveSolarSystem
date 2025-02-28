@@ -30,6 +30,10 @@ function App() {
     ],
     'saturn': [
       { id: 'titan', name: 'Titan' }
+    ],
+    'mars': [
+      { id: 'phobos', name: 'Phobos' },
+      { id: 'deimos', name: 'Deimos' }
     ]
   };
   
@@ -187,7 +191,9 @@ function App() {
                                           moon.id === 'europa' ? '#F0F8FF' :
                                           moon.id === 'ganymede' ? '#C0C8D0' :
                                           moon.id === 'callisto' ? '#9A9AA0' :
-                                          moon.id === 'titan' ? '#E8A952' : '#E0E0E0' 
+                                          moon.id === 'titan' ? '#E8A952' :
+                                          moon.id === 'phobos' ? '#8F7A6A' :
+                                          moon.id === 'deimos' ? '#9A8A7A' : '#E0E0E0' 
                         }}
                       ></span>
                       {moon.name}

@@ -8,7 +8,10 @@ import {
   createEuropaTexture,
   createGanymedeTexture,
   createCallistoTexture,
-  createTitanTexture
+  createTitanTexture,
+  createPhobosTexture,
+  createDeimosTexture,
+  createCharonTexture
 } from '../../utils/textureGenerators';
 
 /**
@@ -91,6 +94,56 @@ const PlanetaryMoons = ({
           glowColor: '#FFCE7A'
         }
         // More Saturn moons like Enceladus can be added in the future
+      ];
+    }
+    // Mars' moons
+    else if (planetId === 'mars') {
+      return [
+        { 
+          id: 'phobos', 
+          name: 'Phobos', 
+          color: '#B9A69A', // Brightened color for better visibility
+          description: 'The larger and innermost of Mars\' two moons, heavily cratered and irregularly shaped. It orbits extremely close to Mars and will eventually crash into the planet or break apart into a ring.', 
+          orbitRadius: 3.5, // Brought closer to Mars
+          orbitSpeed: 0.03, // Fast orbital period (< 8 hours)
+          size: 0.3, // Increased size for visibility
+          startAngle: Math.PI * 0.75,
+          textureGenerator: createPhobosTexture,
+          glowColor: '#FFDA9F', // Brighter glow
+          isIrregular: true // Flag for irregular shape rendering
+        },
+        { 
+          id: 'deimos', 
+          name: 'Deimos', 
+          color: '#C9BAA9', // Brightened color for better visibility
+          description: 'The smaller and outermost of Mars\' two moons. Less cratered than Phobos with a smoother appearance.', 
+          orbitRadius: 6.0, // Brought a bit closer
+          orbitSpeed: 0.008, // Slower than Phobos
+          size: 0.2, // Increased size for visibility
+          startAngle: Math.PI * 1.5,
+          textureGenerator: createDeimosTexture,
+          glowColor: '#FFE8C8', // Brighter glow
+          isIrregular: true // Flag for irregular shape rendering
+        }
+      ];
+    }
+    // Pluto's moons (when pluto is accessed as a dwarf planet)
+    else if (planetId === 'pluto') {
+      return [
+        { 
+          id: 'charon', 
+          name: 'Charon', 
+          color: '#B8BCC0', 
+          description: 'Pluto\'s largest moon, nearly half the size of Pluto itself. Charon and Pluto orbit around a common center of gravity (barycenter) that lies between them, making them a binary system. Charon\'s north pole has a distinctive dark reddish region known as Mordor Macula.', 
+          orbitRadius: 4.0, 
+          orbitSpeed: 0.007, 
+          size: 0.5, // Relatively large compared to Pluto
+          startAngle: Math.PI * 0.5,
+          textureGenerator: createCharonTexture,
+          glowColor: '#C8CCD0',
+          // Charon is more spherical than Mars' moons, so we don't set isIrregular
+        }
+        // Add more of Pluto's moons in the future (Nix, Hydra, Kerberos, Styx)
       ];
     }
     return [];
@@ -178,29 +231,73 @@ const PlanetaryMoons = ({
         return (
           <group key={moon.id}>
             {/* Moon body */}
-            <mesh
+            <group 
               ref={moonRefs.current[moon.id]}
               position={[x, 0, z]}
               onClick={() => handleMoonClick(moon.id)}
               onPointerOver={() => setHoveredMoon(moon.id)}
               onPointerOut={() => setHoveredMoon(null)}
             >
-              <sphereGeometry args={[moon.size, 32, 32]} />
-              <meshStandardMaterial 
-                map={moonTextures[moon.id]}
-                color={moon.color}
-                roughness={0.6}
-                metalness={0.2}
-              />
-            </mesh>
+              {/* For irregular moons like Phobos and Deimos, use shapes that look less spherical */}
+              {moon.isIrregular ? (
+                <>
+                  {/* Main body - using lower poly for more "lumpy" look */}
+                  <mesh rotation={[Math.random(), Math.random(), Math.random()]}>
+                    <icosahedronGeometry args={[moon.size, 1]} /> {/* Low poly count for irregular shape */}
+                    <meshStandardMaterial 
+                      map={moonTextures[moon.id]}
+                      color={moon.color}
+                      roughness={0.8}
+                      metalness={0.1}
+                      bumpScale={0.2} 
+                      flatShading={true} /* Important for irregular look */
+                    />
+                  </mesh>
+                  
+                  {/* Add some lumps to make it more irregular */}
+                  <mesh rotation={[Math.PI/3, Math.PI/4, Math.PI/5]} position={[moon.size * 0.3, moon.size * 0.3, 0]}>
+                    <sphereGeometry args={[moon.size * 0.5, 6, 6]} />
+                    <meshStandardMaterial 
+                      color={moon.color}
+                      roughness={0.8}
+                      metalness={0.1}
+                      map={moonTextures[moon.id]}
+                      flatShading={true}
+                    />
+                  </mesh>
+                  
+                  {/* Another lump for more irregularity */}
+                  <mesh rotation={[Math.PI/5, Math.PI/2, Math.PI/3]} position={[-moon.size * 0.2, -moon.size * 0.2, moon.size * 0.2]}>
+                    <sphereGeometry args={[moon.size * 0.4, 6, 6]} />
+                    <meshStandardMaterial 
+                      color={moon.color}
+                      roughness={0.8}
+                      metalness={0.1}
+                      map={moonTextures[moon.id]}
+                      flatShading={true}
+                    />
+                  </mesh>
+                </>
+              ) : (
+                <mesh>
+                  <sphereGeometry args={[moon.size, 32, 32]} />
+                  <meshStandardMaterial 
+                    map={moonTextures[moon.id]}
+                    color={moon.color}
+                    roughness={0.6}
+                    metalness={0.2}
+                  />
+                </mesh>
+              )}
+            </group>
             
-            {/* Subtle glow effect layer */}
+            {/* Enhanced glow effect layer */}
             <mesh position={[x, 0, z]}>
-              <sphereGeometry args={[moon.size * 1.25, 16, 16]} />
+              <sphereGeometry args={[moon.size * 1.35, 16, 16]} />
               <meshBasicMaterial
                 color={moon.glowColor || moon.color}
                 transparent={true}
-                opacity={0.08}
+                opacity={0.15} /* Increased opacity for better visibility */
                 side={THREE.BackSide}
                 depthWrite={false}
               />
@@ -208,11 +305,11 @@ const PlanetaryMoons = ({
             
             {/* Second glow layer for subtle inner glow */}
             <mesh position={[x, 0, z]}>
-              <sphereGeometry args={[moon.size * 1.08, 24, 24]} />
+              <sphereGeometry args={[moon.size * 1.15, 24, 24]} />
               <meshBasicMaterial
                 color={moon.glowColor || moon.color}
                 transparent={true}
-                opacity={0.12}
+                opacity={0.25} /* Increased opacity for better visibility */
                 side={THREE.BackSide}
                 depthWrite={false}
               />
