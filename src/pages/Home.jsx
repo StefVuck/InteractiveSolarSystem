@@ -14,8 +14,8 @@ const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" })
   // Generate random asteroids in a belt - limit count to avoid crashes
   useEffect(() => {
     const newAsteroids = [];
-    // Limit to a maximum of 100 asteroids for performance
-    const safeCount = Math.min(count, 100);
+    // Limit to a maximum of 1000 asteroids for performance
+    const safeCount = Math.min(count, 1000);
     for (let i = 0; i < safeCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const distance = innerRadius + Math.random() * (outerRadius - innerRadius);
@@ -83,27 +83,75 @@ function RandomAsteroids() {
   return null;
 }
 
-// Red Spot component commented out to fix stability issues
-// const RedSpot = ({ parentSize, parentPosition }) => {
-//   return (
-//     <mesh
-//       position={[
-//         parentPosition[0] + parentSize * 0.6, 
-//         parentPosition[1] + parentSize * 0.1, 
-//         parentPosition[2]
-//       ]}
-//       rotation={[0, Math.PI/2, 0]}
-//     >
-//       <planeGeometry args={[parentSize * 0.6, parentSize * 0.35]} />
-//       <meshBasicMaterial 
-//         color="#DD2200" 
-//         opacity={0.9}
-//         transparent
-//         side={THREE.DoubleSide}
-//       />
-//     </mesh>
-//   );
-// };
+// Jupiter's Great Red Spot component - simpler implementation
+const RedSpot = ({ parentSize, parentPosition }) => {
+  const spotRef = useRef();
+  
+  useFrame(() => {
+    if (spotRef.current) {
+      // Adjust spot position to maintain position relative to Jupiter
+      spotRef.current.position.set(
+        parentPosition[0], 
+        parentPosition[1], 
+        parentPosition[2]
+      );
+      
+      // Slowly rotate the spot to simulate Jupiter's rotation
+      spotRef.current.rotation.y += 0.0075;
+    }
+  });
+  
+  return (
+    // Use a simple mesh with direct material and color for stability
+    <mesh ref={spotRef} position={parentPosition}>
+      <sphereGeometry args={[parentSize * 1.015, 16, 16]} /> {/* Slightly larger to ensure visibility */}
+      <meshBasicMaterial 
+        color="#aa2211"
+        transparent
+        opacity={0.9}
+        alphaTest={0.1}
+        side={THREE.FrontSide}
+        map={createSpotTexture()}
+        depthWrite={false} // Prevents z-fighting with the bands
+      />
+    </mesh>
+  );
+};
+
+// Create a simple texture for Jupiter's Great Red Spot
+const createSpotTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Clear the canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Set background transparent
+  ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw a more circular spot shape below the equator
+  ctx.fillStyle = 'rgba(170, 34, 17, 1.0)';
+  ctx.beginPath();
+  ctx.ellipse(
+    canvas.width * 0.18,    // x at 18% position
+    canvas.height * 0.65,   // y at 65% (below center/equator)
+    canvas.width * 0.07,    // radiusX - more circular width
+    canvas.height * 0.065,  // radiusY - more circular height
+    0,                      // rotation
+    0,                      // start angle
+    Math.PI * 2             // end angle
+  );
+  ctx.fill();
+  
+  // Create a texture from the canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  
+  return texture;
+};
 
 // Simple orbiting Moon component
 const MiniMoon = ({ parentPosition, parentSize }) => {
@@ -142,6 +190,71 @@ const MiniMoon = ({ parentPosition, parentSize }) => {
   );
 };
 
+// Create texture for Jupiter's bands
+const createJupiterTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color
+  ctx.fillStyle = '#E3B982';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Create horizontal bands with varying colors
+  const bands = [
+    { y: 0.15, height: 0.1, color: '#d6ae79' },    // Lighter band near top
+    { y: 0.3, height: 0.05, color: '#c19055' },    // Darker band
+    { y: 0.4, height: 0.05, color: '#e8c090' },    // Light band
+    { y: 0.5, height: 0.05, color: '#c19055' },    // Dark band at equator
+    { y: 0.6, height: 0.05, color: '#e8c090' },    // Light band
+    { y: 0.7, height: 0.1, color: '#c19055' },     // Darker band
+    { y: 0.85, height: 0.1, color: '#d6ae79' }     // Lighter band near bottom
+  ];
+  
+  // Draw the bands
+  bands.forEach(band => {
+    ctx.fillStyle = band.color;
+    ctx.fillRect(0, canvas.height * band.y, canvas.width, canvas.height * band.height);
+  });
+  
+  // Add some subtle texture/turbulence to the bands
+  for (let i = 0; i < 100; i++) {
+    const y = Math.random() * canvas.height;
+    const bandIndex = bands.findIndex(band => 
+      y >= band.y * canvas.height && y < (band.y + band.height) * canvas.height
+    );
+    
+    if (bandIndex >= 0) {
+      // Determine which band we're in and use a slightly lighter/darker color
+      const bandColor = bands[bandIndex].color;
+      const shade = Math.random() < 0.5 ? 20 : -20;
+      
+      // Convert hex to RGB and adjust
+      const r = parseInt(bandColor.slice(1, 3), 16) + shade;
+      const g = parseInt(bandColor.slice(3, 5), 16) + shade;
+      const b = parseInt(bandColor.slice(5, 7), 16) + shade;
+      
+      // Draw a small turbulence swirl
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.beginPath();
+      const width = Math.random() * 100 + 50;
+      const height = Math.random() * 10 + 5;
+      ctx.ellipse(
+        Math.random() * canvas.width,
+        y,
+        width,
+        height,
+        0, 0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+  }
+  
+  // Create the texture
+  return new THREE.CanvasTexture(canvas);
+};
+
 // Enhanced Planet component with hover effect and possible rings
 function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ringsColor, ringsRotation, planetId }) {
   // Use useRef for hover state instead of useState to avoid potential race conditions
@@ -149,6 +262,15 @@ function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ri
   const meshRef = useRef();
   const ringsRef = useRef();
   const cloudsRef = useRef();
+  const rotation = useRef(0); // Track rotation for the Great Red Spot
+  
+  // Create Jupiter's texture with bands if this is Jupiter
+  const jupiterTexture = useMemo(() => {
+    if (planetId === 'jupiter') {
+      return createJupiterTexture();
+    }
+    return null;
+  }, [planetId]);
   
   // Special treatment for Earth
   const isEarth = planetId === 'earth';
@@ -436,7 +558,9 @@ function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ri
         'mercury': 0.002  // Very slow
       };
       
-      meshRef.current.rotation.y += rotationSpeeds[planetId] || 0.01;
+      const rotationSpeed = rotationSpeeds[planetId] || 0.01;
+      meshRef.current.rotation.y += rotationSpeed;
+      rotation.current = meshRef.current.rotation.y; // Track current rotation
       
       // We're keeping this simple now
       if (isEarth && meshRef.current && meshRef.current.material) {
@@ -503,6 +627,24 @@ function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ri
             />
           </mesh>
         </>
+      ) : planetId === 'jupiter' ? (
+        // Jupiter with banded texture
+        <mesh 
+          ref={meshRef}
+          position={position} 
+          onClick={onClick}
+          onPointerOver={() => { hovered.current = true }}
+          onPointerOut={() => { hovered.current = false }}
+        >
+          <sphereGeometry args={[size, 32, 32]} />
+          <meshStandardMaterial 
+            map={jupiterTexture}
+            roughness={0.8}
+            metalness={0.1}
+            emissive="#E3B982" 
+            emissiveIntensity={0.1}
+          />
+        </mesh>
       ) : (
         // Regular planet
         <mesh 
@@ -733,6 +875,14 @@ function Home({ planets }) {
                 <MiniMoon 
                   parentPosition={[x, 0, z]} 
                   parentSize={planetSize} 
+                />
+              )}
+              
+              {/* Add Great Red Spot to Jupiter */}
+              {planet.id === 'jupiter' && (
+                <RedSpot 
+                  parentPosition={[x, 0, z]} 
+                  parentSize={planetSize}
                 />
               )}
             </group>

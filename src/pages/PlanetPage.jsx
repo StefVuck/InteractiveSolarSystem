@@ -7,6 +7,169 @@ import * as THREE from 'three';
 import OrbitingFacts from '../components/OrbitingFacts';
 import astronomyFacts from '../data/astronomyFacts';
 
+// Create Jupiter's texture with distinctive bands
+const createJupiterBandsTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  
+  // Base color - light tan base
+  ctx.fillStyle = '#E3B982';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Define the horizontal bands with varying colors - softened edges
+  const bands = [
+    { y: 0.05, height: 0.05, color: '#ddb277' },   // North polar region - light tan
+    { y: 0.1, height: 0.1, color: '#c19865' },     // North temperate belt - darker brown
+    { y: 0.2, height: 0.05, color: '#e8c090' },    // North temperate zone - lighter
+    { y: 0.25, height: 0.08, color: '#ba8550' },   // North tropical belt - dark orange-brown
+    { y: 0.33, height: 0.1, color: '#e8c090' },    // Equatorial zone - light tan
+    { y: 0.43, height: 0.07, color: '#9a7550' },   // South equatorial belt - dark brown (widest)
+    { y: 0.5, height: 0.08, color: '#e3b982' },    // South tropical zone - medium tan
+    { y: 0.58, height: 0.07, color: '#ba8550' },   // South temperate belt - orange-brown
+    { y: 0.65, height: 0.15, color: '#ddb277' },   // South temperate zone - light tan
+    { y: 0.8, height: 0.15, color: '#c19865' }     // South polar region - medium tan
+  ];
+  
+  // Draw the bands with gradient transitions to avoid hard edges
+  bands.forEach((band, index) => {
+    // For each band, create a gradient transition to the next band
+    const yStart = canvas.height * band.y;
+    const yEnd = yStart + (canvas.height * band.height);
+    
+    // Create gradient for smooth transition between bands
+    const gradient = ctx.createLinearGradient(0, yStart, 0, yEnd);
+    gradient.addColorStop(0, band.color);
+    
+    // Blend with next band color at the edge (if not the last band)
+    if (index < bands.length - 1) {
+      gradient.addColorStop(1, bands[index + 1].color);
+    } else {
+      gradient.addColorStop(1, band.color);
+    }
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, yStart, canvas.width, yEnd - yStart);
+  });
+  
+  // Add subtle turbulence and swirls to each band - softer than before
+  bands.forEach(band => {
+    const yStart = canvas.height * band.y;
+    const height = canvas.height * band.height;
+    
+    // Parse the band color and determine a slightly lighter and darker shade
+    const r = parseInt(band.color.slice(1, 3), 16);
+    const g = parseInt(band.color.slice(3, 5), 16);
+    const b = parseInt(band.color.slice(5, 7), 16);
+    
+    // Add swirls and turbulence within each band - fewer, more subtle
+    const numSwirls = Math.floor(height / 15); // Fewer swirls
+    for (let i = 0; i < numSwirls; i++) {
+      const y = yStart + Math.random() * height;
+      
+      // Use more subtle color variations
+      const shade = Math.random() < 0.5 ? 10 : -10; // Less contrast
+      const swirl_r = Math.min(255, Math.max(0, r + shade));
+      const swirl_g = Math.min(255, Math.max(0, g + shade)); 
+      const swirl_b = Math.min(255, Math.max(0, b + shade));
+      
+      // Draw elongated ellipse for turbulent flow pattern with reduced opacity
+      ctx.fillStyle = `rgba(${swirl_r}, ${swirl_g}, ${swirl_b}, 0.7)`; // More transparent
+      ctx.beginPath();
+      
+      // Vary the width of swirls a lot, but keep them very flat
+      const width = Math.random() * 250 + 100;
+      const swirlHeight = Math.random() * 6 + 2; // Much flatter
+      
+      ctx.ellipse(
+        Math.random() * canvas.width,
+        y,
+        width,
+        swirlHeight,
+        0, 0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+  });
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+// Jupiter's Great Red Spot component - more direct rendering
+const JupiterRedSpot = () => {
+  const spotRef = useRef();
+  
+  useFrame(() => {
+    if (spotRef.current) {
+      // Slowly rotate the spot
+      spotRef.current.rotation.y += 0.008;
+    }
+  });
+  
+  return (
+    <mesh ref={spotRef}>
+      <sphereGeometry args={[2.07, 32, 32]} /> {/* Slightly larger to ensure it appears on top */}
+      <meshBasicMaterial 
+        color="#cc2200" 
+        transparent={true}
+        opacity={0.9}
+        map={createDetailedRedSpotTexture()}
+        depthWrite={false} // Prevents z-fighting with the bands
+        polygonOffset={true} // Helps prevent z-fighting
+        polygonOffsetFactor={-1}
+      />
+    </mesh>
+  );
+};
+
+// Create a better texture for Jupiter's Great Red Spot
+const createDetailedRedSpotTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  
+  // Clear the canvas and make transparent
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Create the red spot with more vibrant color and proper shape/position
+  ctx.fillStyle = 'rgba(204, 34, 0, 0.9)';
+  
+  // Draw a more circular spot below the equator
+  ctx.beginPath();
+  ctx.ellipse(
+    canvas.width * 0.25,     // x position - quarter from left
+    canvas.height * 0.65,    // below equator (65% down)
+    canvas.width * 0.09,     // x radius - more circular
+    canvas.height * 0.085,   // y radius - more circular
+    0, 0, Math.PI * 2        // rotation, start angle, end angle
+  );
+  ctx.fill();
+  
+  // Add a highlight to give it some depth
+  ctx.fillStyle = 'rgba(240, 60, 30, 0.6)';
+  ctx.beginPath();
+  ctx.ellipse(
+    canvas.width * 0.24,     // slightly offset from center
+    canvas.height * 0.64,    // slightly offset from center
+    canvas.width * 0.05,     // smaller radius
+    canvas.height * 0.045,   // smaller radius
+    0, 0, Math.PI * 2
+  );
+  ctx.fill();
+  
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.premultiplyAlpha = true;
+  
+  return texture;
+};
+
 // Simplified orbiting Moon component
 const Moon = () => {
   const moonRef = useRef();
@@ -40,8 +203,17 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   const ringsRef = useRef();
   const cloudsRef = useRef();
   
-  // Special rendering for Earth with continents and clouds
+  // Special rendering for Earth with continents and clouds or Jupiter with bands
   const isEarth = planetId === 'earth';
+  const isJupiter = planetId === 'jupiter';
+  
+  // Create Jupiter's banded texture
+  const jupiterTexture = useMemo(() => {
+    if (isJupiter) {
+      return createJupiterBandsTexture();
+    }
+    return null;
+  }, [isJupiter]);
   
   // Create Earth's land regions using procedural textures with polygon style
   const createEarthTexture = () => {
@@ -529,6 +701,18 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
             </Text>
           </group>
         </>
+      ) : isJupiter ? (
+        // Jupiter with banded texture and high detail
+        <mesh ref={meshRef}>
+          <sphereGeometry args={[getSize(), 64, 64]} />
+          <meshStandardMaterial 
+            map={jupiterTexture}
+            roughness={0.7}
+            metalness={0.2}
+            emissive="#E3B982"
+            emissiveIntensity={0.1}
+          />
+        </mesh>
       ) : (
         // Other planets with procedural geometry
         <mesh ref={meshRef}>
@@ -707,6 +891,9 @@ function PlanetPage({ planets }) {
                 planetId={planet.id} 
                 onMoonClick={planet.id === 'earth' ? handleMoonClick : undefined} 
               />
+              
+              {/* Add Jupiter's Great Red Spot if on Jupiter's page */}
+              {planet.id === 'jupiter' && <JupiterRedSpot />}
               
               {/* Filter facts for this planet */}
               <OrbitingFacts 
