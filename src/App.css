@@ -131,6 +131,95 @@ nav a:hover .planet-icon {
   transform: translate(-50%, -50%);
 }
 
+/* Dwarf planet menu (hidden easter egg) */
+.dwarf-button {
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+  top: 26px;
+  opacity: 0.1;
+  transition: opacity 0.3s;
+  z-index: 100;
+}
+
+.dwarf-button:hover {
+  opacity: 0.3;
+}
+
+.dwarf-button.active {
+  opacity: 0.8;
+}
+
+.dwarf-menu {
+  position: absolute;
+  top: 60px;
+  right: 0px;
+  background-color: rgba(16, 25, 55, 0.98);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  width: 140px;
+  transform: scaleY(0);
+  transform-origin: top center;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 200;
+}
+
+.dwarf-menu.open {
+  transform: scaleY(1);
+  opacity: 1;
+  pointer-events: all;
+}
+
+.dwarf-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 5px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dwarf-menu li {
+  border-bottom: 1px solid rgba(100, 100, 150, 0.2);
+  width: 100%;
+  display: block;
+}
+
+.dwarf-menu li:last-child {
+  border-bottom: none;
+}
+
+.dwarf-menu a {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--text-color);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background-color 0.2s;
+}
+
+.dwarf-menu a:hover {
+  background-color: rgba(100, 100, 150, 0.3);
+}
+
+.dwarf-planet-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
 main {
   flex: 1;
   position: relative;

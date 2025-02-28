@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import OrbitingFacts from '../components/OrbitingFacts';
 import astronomyFacts from '../data/astronomyFacts';
+import { dwarfPlanets } from '../data/planets';
 
 // Asteroid Belt Component with visible particles
 const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" }) => {
@@ -982,6 +983,16 @@ function Home({ planets }) {
           <meshBasicMaterial color="#FFFFAA" transparent opacity={0.1} />
         </mesh>
         
+        {/* Hint for the easter egg - subtle glow in the distance */}
+        <mesh position={[77 * Math.cos(Math.PI * 0.3), -4, 77 * Math.sin(Math.PI * 0.3)]}>
+          <sphereGeometry args={[0.5, 8, 8]} />
+          <meshBasicMaterial color="#FFCC00" transparent opacity={0.03} />
+        </mesh>
+        <mesh position={[29 * Math.cos(Math.PI * 0.8), 3, 29 * Math.sin(Math.PI * 0.8)]}>
+          <sphereGeometry args={[0.4, 8, 8]} />
+          <meshBasicMaterial color="#FFCC00" transparent opacity={0.04} />
+        </mesh>
+        
         {/* Add a point light at the sun's position */}
         <pointLight position={[0, 0, 0]} intensity={0.8} distance={100} decay={2} />
         
@@ -1069,6 +1080,97 @@ function Home({ planets }) {
                   parentSize={planetSize}
                 />
               )}
+            </group>
+          );
+        })}
+        
+        {/* Easter Egg: Dwarf Planets - Hidden from UI */}
+        {dwarfPlanets.map((dwarfPlanet) => {
+          // Use the orbit radius directly from the dwarf planet data
+          // Each dwarf planet gets a fixed position on their orbit for consistency
+          const angle = dwarfPlanet.id === 'pluto' ? Math.PI * 0.3 : 
+                       dwarfPlanet.id === 'ceres' ? Math.PI * 0.8 :
+                       dwarfPlanet.id === 'haumea' ? Math.PI * 1.2 :
+                       Math.PI * 1.7; // Makemake
+                       
+          const x = Math.cos(angle) * dwarfPlanet.orbitRadius;
+          const z = Math.sin(angle) * dwarfPlanet.orbitRadius;
+          const y = dwarfPlanet.id === 'ceres' ? 3 : 
+                   dwarfPlanet.id === 'pluto' ? -4 :
+                   dwarfPlanet.id === 'haumea' ? 6 :
+                   -7; // Distinct heights to make them more noticeable
+          
+          return (
+            <group key={dwarfPlanet.id}>
+              {/* Ambient glow to make them more visible */}
+              <pointLight 
+                position={[x, y, z]} 
+                intensity={0.5} 
+                distance={3} 
+                color={dwarfPlanet.id === 'pluto' ? "#B8C0FF" : 
+                       dwarfPlanet.id === 'ceres' ? "#FFD580" :
+                       dwarfPlanet.id === 'haumea' ? "#E0F0FF" :
+                       "#FFAA80"} 
+              />
+              
+              <mesh
+                position={[x, y, z]}
+                onClick={() => handlePlanetClick(dwarfPlanet.id)}
+                scale={[1.5, 1.5, 1.5]} // Make them slightly larger to be more visible
+                userData={{ isEasterEgg: true }}
+                onPointerOver={(e) => {
+                  // Find and show the label
+                  e.object.parent.children.forEach(child => {
+                    if (child.isText && child.userData.isDwarfPlanet && 
+                        child.userData.id === dwarfPlanet.id) {
+                      child.visible = true;
+                    }
+                  });
+                }}
+                onPointerOut={(e) => {
+                  // Hide the label again
+                  e.object.parent.children.forEach(child => {
+                    if (child.isText && child.userData.isDwarfPlanet) {
+                      child.visible = false;
+                    }
+                  });
+                }}
+              >
+                <sphereGeometry args={[dwarfPlanet.size, 16, 16]} />
+                <meshStandardMaterial
+                  color={dwarfPlanet.color}
+                  roughness={0.6}
+                  metalness={0.2}
+                  emissive={dwarfPlanet.color}
+                  emissiveIntensity={0.3} // Add some self-illumination
+                />
+              </mesh>
+              
+              {/* Add glow effect around the dwarf planet */}
+              <mesh position={[x, y, z]} scale={[1.8, 1.8, 1.8]}>
+                <sphereGeometry args={[dwarfPlanet.size, 8, 8]} />
+                <meshBasicMaterial
+                  color={dwarfPlanet.color}
+                  transparent={true}
+                  opacity={0.15}
+                  side={THREE.BackSide}
+                />
+              </mesh>
+              
+              {/* Always visible but very subtle name */}
+              <Text
+                position={[x, y + dwarfPlanet.size*1.5 + 0.3, z]}
+                fontSize={0.25} // Much smaller text
+                color="#777777" // Gray color to blend with background
+                anchorX="center"
+                anchorY="middle"
+                material-opacity={0.5} // Apply opacity directly to material
+                material-transparent={true} // Ensure transparency works
+                visible={true} // Always visible but hard to see
+                userData={{ isDwarfPlanet: true, id: dwarfPlanet.id }}
+              >
+                {dwarfPlanet.name}
+              </Text>
             </group>
           );
         })}
