@@ -2,6 +2,12 @@
 
 An interactive 3D solar system visualization built with React, Three.js and WebGL. This application offers a scientifically accurate model of our solar system with realistic planets, orbits, and astronomical features. The home page displays the entire solar system with proper orbital distances, while individual pages provide detailed views of each planet with their unique characteristics.
 
+![Solar System Overview (Far View)](https://github.com/StefVuck/InteractiveSolarSystem/blob/main/preview/SolarFar.gif)
+
+![Solar System Overview (Close View)](https://github.com/StefVuck/InteractiveSolarSystem/blob/main/preview/SolarClose.gif)
+
+![Saturn with Detailed Ring System](https://github.com/StefVuck/InteractiveSolarSystem/blob/main/preview/Saturn.gif)
+
 ## Features
 
 - Interactive 3D solar system using Three.js and React Three Fiber
@@ -24,6 +30,10 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
   - Secret menu accessible via double-click on a hidden button
 - Responsive design that works on different screen sizes
 - Interactive 3D Moon page with high-resolution cratered surface
+
+![Earth with Moon and International Space Station](https://github.com/StefVuck/InteractiveSolarSystem/blob/main/preview/Earth.gif)
+
+![Jupiter and Mars with Their Moons](https://github.com/StefVuck/InteractiveSolarSystem/blob/main/preview/JupiterMars.gif)
 
 ## Technologies Used
 
@@ -75,6 +85,8 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
    - Ceres: Located in the asteroid belt between Mars and Jupiter
    - Haumea and Makemake: Located in the outer regions of the solar system
    
+   ![Hidden Dwarf Planet](https://github.com/StefVuck/InteractiveSolarSystem/blob/main/preview/DwarfPlanet.gif)
+
 2. **Secret Menu**: Double-click the nearly invisible dot in the top-right corner of the navigation bar to reveal a hidden menu with direct access to the dwarf planets
 
 3. **Spacecraft**: Find the glowing Voyager 1 and 2 spacecraft in the outer regions of the solar system
