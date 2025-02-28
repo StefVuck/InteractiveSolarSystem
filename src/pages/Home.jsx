@@ -8,6 +8,35 @@ import OrbitingFacts from '../components/OrbitingFacts';
 import astronomyFacts from '../data/astronomyFacts';
 import { dwarfPlanets } from '../data/planets';
 
+// HorizontalText component - text that only rotates horizontally to face camera
+const HorizontalText = ({ children, position, ...props }) => {
+  const textRef = useRef();
+  const cameraPosition = new THREE.Vector3();
+  
+  useFrame(({ camera }) => {
+    if (textRef.current) {
+      // Get camera position
+      camera.getWorldPosition(cameraPosition);
+      
+      // Create a position where the camera is at the same height as the text
+      const targetPosition = new THREE.Vector3(
+        cameraPosition.x,
+        position[1], // Keep the same Y (height)
+        cameraPosition.z
+      );
+      
+      // Make text look at the camera horizontally only
+      textRef.current.lookAt(targetPosition);
+    }
+  });
+  
+  return (
+    <Text ref={textRef} position={position} {...props}>
+      {children}
+    </Text>
+  );
+};
+
 // Spacecraft component with info dialog
 const Spacecraft = ({ position, name, description, icon }) => {
   const [showDialog, setShowDialog] = useState(false);
@@ -53,8 +82,8 @@ const Spacecraft = ({ position, name, description, icon }) => {
         <pointLight position={[0, 0, 0]} intensity={1.5} distance={5} color="#88CCFF" />
       </group>
       
-      {/* Label always visible */}
-      <Text
+      {/* Label always visible with horizontal-only rotation */}
+      <HorizontalText
         position={[0, 0.3, 0]}
         fontSize={0.2}
         color="white"
@@ -62,9 +91,10 @@ const Spacecraft = ({ position, name, description, icon }) => {
         anchorY="middle"
         outlineWidth={0.02}
         outlineColor="#000000"
+        renderOrder={10} // Ensure text renders on top
       >
         {name}
-      </Text>
+      </HorizontalText>
       
       {/* Dialog that appears when clicked */}
       {showDialog && (
@@ -796,19 +826,24 @@ function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ri
         </mesh>
       )}
       
-      {/* Show planet name on hover */}
+      {/* Show planet name on hover with horizontal-only rotation - higher position for Uranus to avoid ring clipping */}
       {hovered && (
-        <Text
-          position={[position[0], position[1] + size + 0.5, position[2]]}
+        <HorizontalText
+          position={[
+            position[0], 
+            position[1] + size + (planetId === 'uranus' ? 2.0 : 0.5), // Higher position for Uranus
+            position[2]
+          ]}
           fontSize={0.5}
           color="white"
           anchorX="center"
           anchorY="middle"
           outlineWidth={0.05}
           outlineColor="#000000"
+          renderOrder={10} // Ensure text renders on top of all other objects
         >
           {name}
-        </Text>
+        </HorizontalText>
       )}
     </group>
   );
@@ -1258,9 +1293,9 @@ function Home({ planets }) {
                 />
               </mesh>
               
-              {/* Always visible but very subtle name */}
-              <Text
-                position={[x, y + dwarfPlanet.size*1.5 + 0.3, z]}
+              {/* Always visible but very subtle name - with horizontal-only rotation */}
+              <HorizontalText
+                position={[x, y + dwarfPlanet.size*1.5 + 0.5, z]} // Slightly higher position
                 fontSize={0.25} // Much smaller text
                 color="#777777" // Gray color to blend with background
                 anchorX="center"
@@ -1269,9 +1304,10 @@ function Home({ planets }) {
                 material-transparent={true} // Ensure transparency works
                 visible={true} // Always visible but hard to see
                 userData={{ isDwarfPlanet: true, id: dwarfPlanet.id }}
+                renderOrder={10} // Ensure text renders on top
               >
                 {dwarfPlanet.name}
-              </Text>
+              </HorizontalText>
             </group>
           );
         })}

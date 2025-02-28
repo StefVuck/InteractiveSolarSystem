@@ -2,10 +2,38 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stars, Text, Html } from '@react-three/drei';
 import { useParams, useNavigate } from 'react-router-dom';
-// Removed framer-motion import
 import * as THREE from 'three';
 import OrbitingFacts from '../components/OrbitingFacts';
 import astronomyFacts from '../data/astronomyFacts';
+
+// HorizontalText component - text that only rotates horizontally to face camera
+const HorizontalText = ({ children, position, ...props }) => {
+  const textRef = useRef();
+  const cameraPosition = new THREE.Vector3();
+  
+  useFrame(({ camera }) => {
+    if (textRef.current) {
+      // Get camera position
+      camera.getWorldPosition(cameraPosition);
+      
+      // Create a position where the camera is at the same height as the text
+      const targetPosition = new THREE.Vector3(
+        cameraPosition.x,
+        position[1], // Keep the same Y (height)
+        cameraPosition.z
+      );
+      
+      // Make text look at the camera horizontally only
+      textRef.current.lookAt(targetPosition);
+    }
+  });
+  
+  return (
+    <Text ref={textRef} position={position} {...props}>
+      {children}
+    </Text>
+  );
+};
 
 // ISS Component with information dialog
 const ISS = ({ orbitRadius = 3, orbitSpeed = 0.005 }) => {
@@ -77,18 +105,19 @@ const ISS = ({ orbitRadius = 3, orbitSpeed = 0.005 }) => {
         {/* Small point light for visibility */}
         <pointLight intensity={0.3} distance={0.5} color="#88CCFF" />
         
-        {/* Label */}
-        <Text
-          position={[0, 0.08, 0]}
+        {/* Label with horizontal-only rotation */}
+        <HorizontalText
+          position={[0, 0.1, 0]} // Slightly higher position
           fontSize={0.04}
           color="white"
           anchorX="center"
           anchorY="middle"
           outlineWidth={0.005}
           outlineColor="#000000"
+          renderOrder={10} // Ensure text renders on top
         >
           ISS
-        </Text>
+        </HorizontalText>
       </group>
       
       {/* Information dialog */}
@@ -1174,15 +1203,16 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
               <planeGeometry args={[3, 0.7]} />
               <meshBasicMaterial transparent opacity={0.7} color="#111133" />
             </mesh>
-            <Text
+            <HorizontalText
               position={[0, 0, 0.1]}
               fontSize={0.3}
               color="white"
               anchorX="center"
               anchorY="middle"
+              renderOrder={11} // Ensure text renders on top with higher priority
             >
               Visit Moon
-            </Text>
+            </HorizontalText>
           </group>
         </>
       ) : isJupiter ? (
