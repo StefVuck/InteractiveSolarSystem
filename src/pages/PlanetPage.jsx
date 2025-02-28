@@ -197,6 +197,156 @@ const Moon = () => {
   );
 };
 
+// Create detailed Saturn ring texture for planet detail view
+const createDetailedSaturnRingsTexture = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048; // Higher resolution for detail view
+  canvas.height = 2048;
+  const ctx = canvas.getContext('2d');
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Define Saturn's rings with scientifically accurate structure
+  const rings = [
+    { radius: 0.45, width: 0.02, color: 'rgba(170, 140, 110, 0.05)', name: 'D Ring' },
+    { radius: 0.47, width: 0.06, color: 'rgba(200, 170, 130, 0.15)', name: 'C Ring' },
+    { radius: 0.53, width: 0.01, color: 'rgba(100, 90, 70, 0.05)', name: 'Maxwell Gap' },
+    { radius: 0.54, width: 0.09, color: 'rgba(230, 200, 150, 0.7)', name: 'B Ring' },
+    { radius: 0.63, width: 0.03, color: 'rgba(140, 120, 100, 0.2)', name: 'Cassini Division' },
+    { radius: 0.66, width: 0.08, color: 'rgba(220, 190, 145, 0.6)', name: 'A Ring' },
+    { radius: 0.74, width: 0.01, color: 'rgba(130, 110, 90, 0.1)', name: 'Encke Gap' },
+    { radius: 0.75, width: 0.02, color: 'rgba(200, 170, 130, 0.4)', name: 'A Ring (outer)' },
+    { radius: 0.78, width: 0.01, color: 'rgba(150, 130, 100, 0.05)', name: 'Keeler Gap' },
+    { radius: 0.8, width: 0.03, color: 'rgba(190, 160, 120, 0.2)', name: 'F Ring' },
+    { radius: 0.84, width: 0.02, color: 'rgba(170, 150, 120, 0.08)', name: 'G Ring' },
+    { radius: 0.87, width: 0.04, color: 'rgba(160, 140, 110, 0.03)', name: 'E Ring' }
+  ];
+  
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const maxRadius = Math.min(centerX, centerY);
+  
+  // Draw rings with gradients
+  rings.forEach((ring, index) => {
+    const innerRadius = ring.radius * maxRadius;
+    const outerRadius = (ring.radius + ring.width) * maxRadius;
+    
+    // Create gradient for smooth transition
+    const gradient = ctx.createRadialGradient(
+      centerX, centerY, innerRadius,
+      centerX, centerY, outerRadius
+    );
+    
+    // Extract base color components for variations
+    const baseColor = ring.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+    if (!baseColor) return;
+    
+    const r = parseInt(baseColor[1]);
+    const g = parseInt(baseColor[2]);
+    const b = parseInt(baseColor[3]);
+    const a = parseFloat(baseColor[4]);
+    
+    // Add gradient stops with subtle variations
+    gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a})`);
+    gradient.addColorStop(0.2, `rgba(${r+10}, ${g+5}, ${b}, ${a*0.9})`);
+    gradient.addColorStop(0.5, `rgba(${r+5}, ${g}, ${b-5}, ${a*1.1})`);
+    gradient.addColorStop(0.8, `rgba(${r}, ${g+8}, ${b+5}, ${a*0.95})`);
+    gradient.addColorStop(1, `rgba(${r-5}, ${g-5}, ${b}, ${a*0.8})`);
+    
+    // Draw ring
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2, true);
+    ctx.fill();
+  });
+  
+  // Add particles for texture detail
+  const numParticles = 12000; // More particles for detail view
+  for (let i = 0; i < numParticles; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const minRadius = 0.45 * maxRadius; // Inner edge of rings
+    const maxRingRadius = 0.91 * maxRadius; // Outer edge of rings
+    const distance = minRadius + Math.random() * (maxRingRadius - minRadius);
+    
+    // Position
+    const x = centerX + Math.cos(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
+    
+    // Match particle to the ring section it's in
+    const ringSection = rings.find(ring => {
+      const r = distance / maxRadius;
+      return r >= ring.radius && r < (ring.radius + ring.width);
+    });
+    
+    // Vary opacity based on ring section
+    let opacity = 0.5;
+    let r = 225, g = 200, b = 170;
+    
+    if (ringSection) {
+      const match = ringSection.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (match) {
+        r = parseInt(match[1]);
+        g = parseInt(match[2]);
+        b = parseInt(match[3]);
+        opacity = parseFloat(match[4]) * (Math.random() * 0.8 + 0.6);
+      }
+    }
+    
+    // Add slight color variation to particles
+    const variation = Math.random() * 30 - 15;
+    r = Math.min(255, Math.max(0, r + variation));
+    g = Math.min(255, Math.max(0, g + variation));
+    b = Math.min(255, Math.max(0, b + variation));
+    
+    // Draw particle
+    const size = Math.random() * 2 + 0.5;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    ctx.fillRect(x - size/2, y - size/2, size, size);
+  }
+  
+  // Add concentric streaking patterns
+  for (let i = 0; i < 500; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const ringIndex = Math.floor(Math.random() * rings.length);
+    const ring = rings[ringIndex];
+    const radius = (ring.radius + Math.random() * ring.width) * maxRadius;
+    
+    // Calculate arc length and position
+    const arcLength = Math.random() * 0.2 + 0.05; // 5-25% of the circle
+    const startAngle = angle;
+    const endAngle = angle + arcLength * Math.PI * 2;
+    
+    const match = ring.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+    if (!match) continue;
+    
+    const r = parseInt(match[1]);
+    const g = parseInt(match[2]);
+    const b = parseInt(match[3]);
+    const a = parseFloat(match[4]) * (Math.random() * 0.5 + 0.3);
+    
+    // Draw arc
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+    ctx.lineWidth = Math.random() * 2 + 0.5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+    ctx.stroke();
+  }
+  
+  // Clear center for planet
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 0.4 * maxRadius, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.globalCompositeOperation = 'source-over';
+  
+  // Create texture
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
 // Enhanced planet detail component
 const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   const meshRef = useRef();
@@ -206,14 +356,23 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   // Special rendering for Earth with continents and clouds or Jupiter with bands
   const isEarth = planetId === 'earth';
   const isJupiter = planetId === 'jupiter';
+  const isSaturn = planetId === 'saturn';
   
-  // Create Jupiter's banded texture
+  // Create textures based on planet type
   const jupiterTexture = useMemo(() => {
     if (isJupiter) {
       return createJupiterBandsTexture();
     }
     return null;
   }, [isJupiter]);
+  
+  // Create Saturn's rings texture
+  const saturnRingsTexture = useMemo(() => {
+    if (isSaturn) {
+      return createDetailedSaturnRingsTexture();
+    }
+    return null;
+  }, [isSaturn]);
   
   // Create Earth's land regions using procedural textures with polygon style
   const createEarthTexture = () => {
@@ -610,7 +769,8 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
         outerRadius: 4,
         color: '#F4D59C',
         rotation: [Math.PI / 4, 0, 0],
-        opacity: 0.7
+        opacity: 1.0, // Fully opaque for Saturn
+        texture: saturnRingsTexture
       };
     } else if (planetId === 'uranus') {
       return {
@@ -618,7 +778,7 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
         outerRadius: 3,
         color: '#AAD3F2',
         rotation: [0, 0, Math.PI / 2], // Vertical rings for Uranus
-        opacity: 0.25 // Fainter rings
+        opacity: 0.15 // More transparent for Uranus
       };
     }
     return null;
@@ -734,14 +894,24 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
           ref={ringsRef} 
           rotation={ringProps.rotation}
         >
-          <ringGeometry args={[ringProps.innerRadius, ringProps.outerRadius, 128]} />
-          <meshPhongMaterial 
-            color={ringProps.color} 
-            side={THREE.DoubleSide} 
-            transparent={true} 
-            opacity={ringProps.opacity}
-            flatShading={true}
-          />
+          <ringGeometry args={[ringProps.innerRadius, ringProps.outerRadius, 256]} /> {/* Higher segment count */}
+          {isSaturn ? (
+            <meshBasicMaterial 
+              map={ringProps.texture}
+              side={THREE.DoubleSide} 
+              transparent={true} 
+              opacity={ringProps.opacity}
+              alphaTest={0.05}
+            />
+          ) : (
+            <meshPhongMaterial 
+              color={ringProps.color} 
+              side={THREE.DoubleSide} 
+              transparent={true} 
+              opacity={ringProps.opacity}
+              flatShading={true}
+            />
+          )}
         </mesh>
       )}
     </group>

@@ -256,7 +256,7 @@ const createJupiterTexture = () => {
 };
 
 // Enhanced Planet component with hover effect and possible rings
-function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ringsColor, ringsRotation, planetId }) {
+function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ringsColor, ringsRotation, ringsTexture, ringsOpacity, planetId }) {
   // Use useRef for hover state instead of useState to avoid potential race conditions
   const hovered = useRef(false);
   const meshRef = useRef();
@@ -670,13 +670,24 @@ function EnhancedPlanet({ position, color, size = 1, name, onClick, hasRings, ri
           position={position} 
           rotation={ringsRotation || [Math.PI / 4, 0, 0]}
         >
-          <ringGeometry args={[size * 1.3, size * 2.2, 64]} />
-          <meshBasicMaterial 
-            color={ringsColor || color} 
-            side={THREE.DoubleSide}
-            transparent={true}
-            opacity={0.7}
-          />
+          <ringGeometry args={[size * 1.3, size * 2.2, 128]} />
+          {planetId === 'saturn' ? (
+            <meshBasicMaterial 
+              map={ringsTexture}
+              color="#FFFFFF" 
+              side={THREE.DoubleSide}
+              transparent={true}
+              opacity={ringsOpacity || 1.0}
+              alphaTest={0.1} // Prevents rendering fully transparent pixels
+            />
+          ) : (
+            <meshBasicMaterial 
+              color={ringsColor || color} 
+              side={THREE.DoubleSide}
+              transparent={true}
+              opacity={ringsOpacity || 0.7}
+            />
+          )}
         </mesh>
       )}
       
@@ -741,17 +752,171 @@ function Home({ planets }) {
     return ['saturn', 'uranus'].includes(planetId);
   };
   
+  // Create Saturn's ring texture
+  const createSaturnRingsTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    
+    // Clear canvas with full transparency
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Create ring bands with varying opacities and colors
+    const rings = [
+      { radius: 0.55, width: 0.03, color: 'rgba(180, 140, 100, 0.05)', name: 'D Ring' },
+      { radius: 0.58, width: 0.03, color: 'rgba(210, 180, 130, 0.1)', name: 'C Ring' },
+      { radius: 0.61, width: 0.01, color: 'rgba(100, 80, 60, 0.15)', name: 'Maxwell Gap' },
+      { radius: 0.62, width: 0.05, color: 'rgba(210, 180, 130, 0.3)', name: 'B Ring (inner)' },
+      { radius: 0.67, width: 0.05, color: 'rgba(240, 220, 170, 0.7)', name: 'B Ring (middle)' },
+      { radius: 0.72, width: 0.03, color: 'rgba(220, 190, 140, 0.5)', name: 'B Ring (outer)' },
+      { radius: 0.75, width: 0.02, color: 'rgba(150, 130, 100, 0.1)', name: 'Cassini Division' },
+      { radius: 0.77, width: 0.08, color: 'rgba(240, 210, 160, 0.4)', name: 'A Ring' },
+      { radius: 0.85, width: 0.01, color: 'rgba(120, 100, 80, 0.05)', name: 'Encke Gap' },
+      { radius: 0.86, width: 0.04, color: 'rgba(220, 190, 150, 0.2)', name: 'A Ring (outer)' },
+      { radius: 0.91, width: 0.04, color: 'rgba(200, 170, 130, 0.05)', name: 'F Ring' }
+    ];
+    
+    // Draw center of the canvas as transparent
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(centerX, centerY);
+    
+    // Draw the ring bands as concentric circles
+    rings.forEach(ring => {
+      const innerRadius = ring.radius * maxRadius;
+      const outerRadius = (ring.radius + ring.width) * maxRadius;
+      
+      // Create a radial gradient for each ring
+      const gradient = ctx.createRadialGradient(
+        centerX, centerY, innerRadius,
+        centerX, centerY, outerRadius
+      );
+      
+      gradient.addColorStop(0, ring.color);
+      
+      // Add some variation within each ring - safely parse colors
+      const colorMatch = ring.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (colorMatch) {
+        const r = parseInt(colorMatch[1]);
+        const g = parseInt(colorMatch[2]);
+        const b = parseInt(colorMatch[3]);
+        const a = parseFloat(colorMatch[4]);
+        
+        // Safely create middle color with adjusted opacity
+        gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${a * 0.9})`);
+        
+        // Safely create end color with adjusted opacity
+        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${a * 0.7})`);
+      } else {
+        // Fallback if parsing fails
+        gradient.addColorStop(0.5, ring.color);
+        gradient.addColorStop(1, ring.color);
+      }
+      
+      // Draw the ring
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2, true);
+      ctx.fill();
+    });
+    
+    // Add some particle detail/grain to the rings
+    const numParticles = 5000;
+    for (let i = 0; i < numParticles; i++) {
+      // Random angle and distance from center
+      const angle = Math.random() * Math.PI * 2;
+      const minRadius = 0.55 * maxRadius; // Inner edge of rings
+      const maxRingRadius = 0.95 * maxRadius; // Outer edge of rings
+      const distance = minRadius + Math.random() * (maxRingRadius - minRadius);
+      
+      // Calculate position
+      const x = centerX + Math.cos(angle) * distance;
+      const y = centerY + Math.sin(angle) * distance;
+      
+      // Vary particle brightness based on ring section
+      const ringSection = rings.find(ring => {
+        const r = distance / maxRadius;
+        return r >= ring.radius && r < (ring.radius + ring.width);
+      });
+      
+      let opacity = 0.7;
+      if (ringSection) {
+        // Extract opacity from the rgba color - safer parsing
+        const match = ringSection.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+        if (match) {
+          opacity = parseFloat(match[4]) * (Math.random() * 0.5 + 0.5);
+        }
+      }
+      
+      // Draw a small particle
+      const size = Math.random() * 1.5 + 0.5;
+      ctx.fillStyle = `rgba(255, 240, 220, ${opacity})`;
+      ctx.fillRect(x - size/2, y - size/2, size, size);
+    }
+    
+    // Add radial streaks for a more dynamic appearance
+    const numStreaks = 200;
+    for (let i = 0; i < numStreaks; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const minRadius = 0.55 * maxRadius;
+      const maxRingRadius = 0.95 * maxRadius;
+      
+      // Create streaks of varying lengths
+      const startDistance = minRadius + Math.random() * (maxRingRadius - minRadius);
+      const length = Math.random() * 20 + 5;
+      const endDistance = Math.min(startDistance + length, maxRingRadius);
+      
+      // Starting and ending points
+      const startX = centerX + Math.cos(angle) * startDistance;
+      const startY = centerY + Math.sin(angle) * startDistance;
+      const endX = centerX + Math.cos(angle) * endDistance;
+      const endY = centerY + Math.sin(angle) * endDistance;
+      
+      // Draw the streak
+      ctx.strokeStyle = `rgba(255, 240, 220, ${Math.random() * 0.2})`;
+      ctx.lineWidth = Math.random() * 1.5 + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+    
+    // Clear center hole for the planet
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 0.4 * maxRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Reset composite operation
+    ctx.globalCompositeOperation = 'source-over';
+    
+    // Create texture
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.rotation = Math.PI / 2;
+    texture.center = new THREE.Vector2(0.5, 0.5);
+    
+    return texture;
+  };
+  
   // Get ring properties
+  // Create saturnRingsTexture once and reuse it
+  const saturnRingsTexture = useMemo(() => createSaturnRingsTexture(), []);
+  
   const getRingProps = (planetId) => {
     if (planetId === 'saturn') {
       return {
         ringsColor: '#F4D59C',
-        ringsRotation: [Math.PI / 4, 0, 0]
+        ringsRotation: [Math.PI / 4, 0, 0],
+        ringsTexture: saturnRingsTexture,
+        ringsOpacity: 1.0 // More opaque for Saturn
       };
     } else if (planetId === 'uranus') {
       return {
         ringsColor: '#AAD3F2',
-        ringsRotation: [0, 0, Math.PI / 2] // Vertical rings for Uranus
+        ringsRotation: [0, 0, Math.PI / 2], // Vertical rings for Uranus
+        ringsOpacity: 0.15 // Less opaque for Uranus
       };
     }
     return {};
@@ -867,7 +1032,10 @@ function Home({ planets }) {
                 onClick={() => handlePlanetClick(planet.id)}
                 hasRings={hasRings(planet.id)}
                 planetId={planet.id}
-                {...ringProps}
+                ringsColor={ringProps.ringsColor}
+                ringsRotation={ringProps.ringsRotation}
+                ringsTexture={ringProps.ringsTexture}
+                ringsOpacity={ringProps.ringsOpacity}
               />
               
               {/* Add moon to Earth */}
