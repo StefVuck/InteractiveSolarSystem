@@ -1,16 +1,35 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { useState, useMemo, useRef, useEffect, Suspense, lazy } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Line } from '@react-three/drei';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 
-// Import components
+// Performance Component
+function PerformanceMonitor() {
+  const { gl } = useThree();
+  
+  useEffect(() => {
+    // Keep sRGB encoding for color correctness but optimize other settings
+    gl.outputEncoding = THREE.sRGBEncoding;
+    gl.physicallyCorrectLights = false;
+    
+    // Enable WebGL optimizations for texture loading
+    const renderer = gl.getContext();
+    if (renderer) {
+      renderer.powerPreference = 'high-performance';
+    }
+  }, [gl]);
+  
+  return null;
+}
+
+// Import components - with code splitting for less essential components
 import EnhancedPlanet from '../components/celestial/EnhancedPlanet';
-import AsteroidBelt from '../components/celestial/AsteroidBelt';
-import RedSpot from '../components/celestial/RedSpot';
-import MiniMoon from '../components/celestial/MiniMoon';
-import Spacecraft from '../components/spacecraft/Spacecraft';
-import OrbitingFacts from '../components/OrbitingFacts';
+const AsteroidBelt = lazy(() => import('../components/celestial/AsteroidBelt'));
+const RedSpot = lazy(() => import('../components/celestial/RedSpot'));
+const MiniMoon = lazy(() => import('../components/celestial/MiniMoon'));
+const Spacecraft = lazy(() => import('../components/spacecraft/Spacecraft'));
+const OrbitingFacts = lazy(() => import('../components/OrbitingFacts'));
 import HorizontalText from '../components/common/HorizontalText';
 
 // Import data and utilities
@@ -253,36 +272,45 @@ function Home({ planets, dwarfMenuOpen }) {
       <Canvas 
         camera={{ position: cameraPosition, fov: 40 }}  // Reduced FOV to see more
         gl={{ 
-          powerPreference: 'default', 
-          antialias: true,  // Enabled for smoother orbit lines
+          powerPreference: 'high-performance', 
+          antialias: false,  // Disabled for initial load performance
           depth: true,
           stencil: false,
           alpha: false
-        }}>
+        }}
+        dpr={[1, 2]} // Limit pixel ratio for better performance
+        performance={{ min: 0.5 }} // Allow frame rate to drop during heavy loads
+        >
+        <PerformanceMonitor />
         <ambientLight intensity={0.3} /> {/* Reduced to make night side darker */}
         <pointLight position={[10, 10, 10]} intensity={1.0} color="#FFF8E0" />
         <pointLight position={[-10, -10, -10]} intensity={0.3} color="#C0C8FF" />
         
-        {/* Sun */}
+        {/* Sun - bright yellow with combined approaches */}
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[2.8, 32, 32]} />
-          <meshBasicMaterial color="#FFFF00" />
+          <meshStandardMaterial 
+            emissive="#FFCC00" 
+            emissiveIntensity={2.5} 
+            color="#FFCC00" 
+            toneMapped={false} 
+          />
         </mesh>
         
-        {/* Enhanced sun glow - multiple layers */}
+        {/* Enhanced sun glow - multiple layers with increased brightness but yellower */}
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[3.2, 32, 32]} />
-          <meshBasicMaterial color="#FFFF00" transparent opacity={0.4} />
+          <meshBasicMaterial color="#FFCC00" transparent opacity={0.6} toneMapped={false} />
         </mesh>
         
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[3.8, 32, 32]} />
-          <meshBasicMaterial color="#FFFF55" transparent opacity={0.2} />
+          <meshBasicMaterial color="#FFD700" transparent opacity={0.4} toneMapped={false} />
         </mesh>
         
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[4.5, 24, 24]} />
-          <meshBasicMaterial color="#FFFFAA" transparent opacity={0.1} />
+          <meshBasicMaterial color="#FFEE44" transparent opacity={0.2} toneMapped={false} />
         </mesh>
         
         {/* Hint for the easter egg - subtle glow in the distance */}
@@ -295,32 +323,39 @@ function Home({ planets, dwarfMenuOpen }) {
           <meshBasicMaterial color="#FFCC00" transparent opacity={0.04} />
         </mesh>
         
-        {/* Add a point light at the sun's position */}
-        <pointLight position={[0, 0, 0]} intensity={0.8} distance={100} decay={2} />
+        {/* Add multiple point lights at the sun's position for stronger illumination */}
+        <pointLight position={[0, 0, 0]} intensity={1.5} distance={120} decay={1.8} color="#FFCC00" />
+        <pointLight position={[0, 0, 0]} intensity={1.0} distance={80} decay={1.5} color="#FFD700" />
         
         {/* Background stars - minimal count for stability */}
-        <Stars radius={100} depth={50} count={1500} factor={3} saturation={0} />
+        <Stars radius={100} depth={50} count={1500} factor={3} saturation={0} fade={true} />
         
         {/* Asteroid Belts */}
-        {/* Main Belt between Mars and Jupiter */}
-        <AsteroidBelt 
-          innerRadius={36} 
-          outerRadius={42.75} 
-          count={140} 
-          name="Main Asteroid Belt" 
-        />
-        
-        {/* Kuiper Belt beyond Neptune */}
-        <AsteroidBelt 
-          innerRadius={94.5} 
-          outerRadius={112.5} 
-          count={80} 
-          name="Kuiper Belt" 
-          color="#777777"
-        />
+        <Suspense fallback={null}>
+          {/* Main Belt between Mars and Jupiter */}
+          <AsteroidBelt 
+            innerRadius={36} 
+            outerRadius={42.75} 
+            count={140} 
+            name="Main Asteroid Belt" 
+          />
+          
+          {/* Kuiper Belt beyond Neptune */}
+          <AsteroidBelt 
+            innerRadius={94.5} 
+            outerRadius={112.5} 
+            count={80} 
+            name="Kuiper Belt" 
+            color="#777777"
+          />
+        </Suspense>
         
         {/* Orbiting Facts - conditionally rendered */}
-        {showFacts && <OrbitingFacts facts={astronomyFacts} maxActive={5} scene="solar-system" />}
+        {showFacts && (
+          <Suspense fallback={null}>
+            <OrbitingFacts facts={astronomyFacts} maxActive={5} scene="solar-system" />
+          </Suspense>
+        )}
         
         {/* Orbit paths for regular planets - using Line component for consistency */}
         {showOrbitLines && planets.map((planet, index) => {
@@ -444,18 +479,22 @@ function Home({ planets, dwarfMenuOpen }) {
               
               {/* Add moon to Earth */}
               {planet.id === 'earth' && (
-                <MiniMoon 
-                  parentPosition={[0, 0, 0]} 
-                  parentSize={planetSize}
-                />
+                <Suspense fallback={null}>
+                  <MiniMoon 
+                    parentPosition={[0, 0, 0]} 
+                    parentSize={planetSize}
+                  />
+                </Suspense>
               )}
               
               {/* Add Great Red Spot to Jupiter */}
               {planet.id === 'jupiter' && (
-                <RedSpot 
-                  parentPosition={[0, 0, 0]} 
-                  parentSize={planetSize}
-                />
+                <Suspense fallback={null}>
+                  <RedSpot 
+                    parentPosition={[0, 0, 0]} 
+                    parentSize={planetSize}
+                  />
+                </Suspense>
               )}
             </PlanetOrbit>
           );
@@ -556,95 +595,98 @@ function Home({ planets, dwarfMenuOpen }) {
           );
         })}
         
-        {/* Voyager 1 - Position relative to Jupiter's distance */}
-        <Spacecraft
-          position={[
-            Math.cos(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5), // 2.5x Jupiter's distance (automatically scaled with the new orbits)
-            12, // Above the plane (increased from 8)
-            Math.sin(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5)
-          ]}
-          name="Voyager 1"
-          description="Launched in 1977, Voyager 1 is the farthest human-made object from Earth. It has crossed into interstellar space in 2012 and continues to send back data from beyond our solar system. It carries the Golden Record, containing sounds and images of Earth for any extraterrestrial intelligence that might find it."
-          icon={
-            <group>
-              {/* Main body - Gold foil covered bus */}
-              <mesh>
-                <boxGeometry args={[0.3, 0.1, 0.3]} />
-                <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} />
-              </mesh>
-              
-              {/* Large dish antenna */}
-              <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI/2]}>
-                <cylinderGeometry args={[0.25, 0.25, 0.02, 16]} />
-                <meshStandardMaterial color="#CCC" emissive="#FFFFFF" emissiveIntensity={0.3} />
-              </mesh>
-              
-              {/* RTG power source */}
-              <mesh position={[-0.2, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
-                <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
-                <meshStandardMaterial color="#555" emissive="#FF6622" emissiveIntensity={0.6} />
-              </mesh>
-              
-              {/* Additional outer glow spheres */}
-              <mesh>
-                <sphereGeometry args={[0.6, 8, 8]} />
-                <meshBasicMaterial color="#88CCFF" transparent={true} opacity={0.15} />
-              </mesh>
-              <mesh>
-                <sphereGeometry args={[1.0, 8, 8]} />
-                <meshBasicMaterial color="#88CCFF" transparent={true} opacity={0.07} />
-              </mesh>
-              
-              {/* Additional point light */}
-              <pointLight position={[0, 0, 0]} intensity={2} distance={15} color="#AADDFF" />
-            </group>
-          }
-        />
-        
-        {/* Voyager 2 - Position relative to Jupiter's distance, different direction */}
-        <Spacecraft
-          position={[
-            Math.cos(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2), // 2.2x Jupiter's distance (automatically scaled with the new orbits)
-            -9, // Below the plane (increased from -6)
-            Math.sin(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2)
-          ]}
-          name="Voyager 2"
-          description="Launched in 1977, Voyager 2 is the only spacecraft to have visited all four gas giant planets: Jupiter, Saturn, Uranus, and Neptune. It crossed into interstellar space in 2018 and continues its journey outward. Like its twin, it carries the Golden Record with Earth's sounds and images."
-          icon={
-            <group>
-              {/* Main body - Gold foil covered bus */}
-              <mesh>
-                <boxGeometry args={[0.3, 0.1, 0.3]} />
-                <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} />
-              </mesh>
-              
-              {/* Large dish antenna */}
-              <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI/2]}>
-                <cylinderGeometry args={[0.25, 0.25, 0.02, 16]} />
-                <meshStandardMaterial color="#CCC" emissive="#FFFFFF" emissiveIntensity={0.3} />
-              </mesh>
-              
-              {/* RTG power source */}
-              <mesh position={[-0.2, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
-                <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
-                <meshStandardMaterial color="#555" emissive="#FF6622" emissiveIntensity={0.6} />
-              </mesh>
-              
-              {/* Additional outer glow spheres - slightly different color tint */}
-              <mesh>
-                <sphereGeometry args={[0.6, 8, 8]} />
-                <meshBasicMaterial color="#88DDFF" transparent={true} opacity={0.15} />
-              </mesh>
-              <mesh>
-                <sphereGeometry args={[1.0, 8, 8]} />
-                <meshBasicMaterial color="#88DDFF" transparent={true} opacity={0.07} />
-              </mesh>
-              
-              {/* Additional point light - slightly different color tint */}
-              <pointLight position={[0, 0, 0]} intensity={2} distance={15} color="#AAEEFF" />
-            </group>
-          }
-        />
+        {/* Spacecraft section - wrapped in Suspense and only loaded after main scene renders */}
+        <Suspense fallback={null}>
+          {/* Voyager 1 - Position relative to Jupiter's distance */}
+          <Spacecraft
+            position={[
+              Math.cos(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5), // 2.5x Jupiter's distance (automatically scaled with the new orbits)
+              12, // Above the plane (increased from 8)
+              Math.sin(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5)
+            ]}
+            name="Voyager 1"
+            description="Launched in 1977, Voyager 1 is the farthest human-made object from Earth. It has crossed into interstellar space in 2012 and continues to send back data from beyond our solar system. It carries the Golden Record, containing sounds and images of Earth for any extraterrestrial intelligence that might find it."
+            icon={
+              <group>
+                {/* Main body - Gold foil covered bus */}
+                <mesh>
+                  <boxGeometry args={[0.3, 0.1, 0.3]} />
+                  <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} />
+                </mesh>
+                
+                {/* Large dish antenna */}
+                <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI/2]}>
+                  <cylinderGeometry args={[0.25, 0.25, 0.02, 16]} />
+                  <meshStandardMaterial color="#CCC" emissive="#FFFFFF" emissiveIntensity={0.3} />
+                </mesh>
+                
+                {/* RTG power source */}
+                <mesh position={[-0.2, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                  <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
+                  <meshStandardMaterial color="#555" emissive="#FF6622" emissiveIntensity={0.6} />
+                </mesh>
+                
+                {/* Additional outer glow spheres */}
+                <mesh>
+                  <sphereGeometry args={[0.6, 8, 8]} />
+                  <meshBasicMaterial color="#88CCFF" transparent={true} opacity={0.15} />
+                </mesh>
+                <mesh>
+                  <sphereGeometry args={[1.0, 8, 8]} />
+                  <meshBasicMaterial color="#88CCFF" transparent={true} opacity={0.07} />
+                </mesh>
+                
+                {/* Additional point light */}
+                <pointLight position={[0, 0, 0]} intensity={2} distance={15} color="#AADDFF" />
+              </group>
+            }
+          />
+          
+          {/* Voyager 2 - Position relative to Jupiter's distance, different direction */}
+          <Spacecraft
+            position={[
+              Math.cos(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2), // 2.2x Jupiter's distance (automatically scaled with the new orbits)
+              -9, // Below the plane (increased from -6)
+              Math.sin(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2)
+            ]}
+            name="Voyager 2"
+            description="Launched in 1977, Voyager 2 is the only spacecraft to have visited all four gas giant planets: Jupiter, Saturn, Uranus, and Neptune. It crossed into interstellar space in 2018 and continues its journey outward. Like its twin, it carries the Golden Record with Earth's sounds and images."
+            icon={
+              <group>
+                {/* Main body - Gold foil covered bus */}
+                <mesh>
+                  <boxGeometry args={[0.3, 0.1, 0.3]} />
+                  <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} />
+                </mesh>
+                
+                {/* Large dish antenna */}
+                <mesh position={[0, 0.15, 0]} rotation={[0, 0, Math.PI/2]}>
+                  <cylinderGeometry args={[0.25, 0.25, 0.02, 16]} />
+                  <meshStandardMaterial color="#CCC" emissive="#FFFFFF" emissiveIntensity={0.3} />
+                </mesh>
+                
+                {/* RTG power source */}
+                <mesh position={[-0.2, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                  <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
+                  <meshStandardMaterial color="#555" emissive="#FF6622" emissiveIntensity={0.6} />
+                </mesh>
+                
+                {/* Additional outer glow spheres - slightly different color tint */}
+                <mesh>
+                  <sphereGeometry args={[0.6, 8, 8]} />
+                  <meshBasicMaterial color="#88DDFF" transparent={true} opacity={0.15} />
+                </mesh>
+                <mesh>
+                  <sphereGeometry args={[1.0, 8, 8]} />
+                  <meshBasicMaterial color="#88DDFF" transparent={true} opacity={0.07} />
+                </mesh>
+                
+                {/* Additional point light - slightly different color tint */}
+                <pointLight position={[0, 0, 0]} intensity={2} distance={15} color="#AAEEFF" />
+              </group>
+            }
+          />
+        </Suspense>
         
         <OrbitControls enableRotate={!isTransitioning} />
       </Canvas>

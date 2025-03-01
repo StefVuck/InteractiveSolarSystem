@@ -25,3 +25,28 @@ html, body {
   width: 100%;
   min-height: 100vh;
 }
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading indicator */
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 50vh;
+  background: #050A24;
+  color: white;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+/* Content visibility optimization */
+img, canvas {
+  content-visibility: auto;
+}

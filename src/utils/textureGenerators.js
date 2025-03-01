@@ -370,12 +370,15 @@ export const createCloudTexture = () => {
 };
 
 /**
- * Creates a texture for Saturn's rings
+ * Creates a simplified texture for Saturn's rings - optimized for performance
  */
 export const createDetailedSaturnRingsTexture = () => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 1024;
+  // Use shared offscreen canvas if available, or create a new one
+  const canvas = window.sharedOffscreenCanvas || document.createElement('canvas');
+  if (!window.sharedOffscreenCanvas) {
+    canvas.width = 512;
+    canvas.height = 512;
+  }
   const ctx = canvas.getContext('2d');
   
   // Clear canvas with full transparency
@@ -441,8 +444,8 @@ export const createDetailedSaturnRingsTexture = () => {
     ctx.fill();
   });
   
-  // Add some particle detail/grain to the rings
-  const numParticles = 5000;
+  // Add some particle detail - slightly fewer particles for performance
+  const numParticles = 3000; // Balanced value
   for (let i = 0; i < numParticles; i++) {
     // Random angle and distance from center
     const angle = Math.random() * Math.PI * 2;
@@ -475,8 +478,8 @@ export const createDetailedSaturnRingsTexture = () => {
     ctx.fillRect(x - size/2, y - size/2, size, size);
   }
   
-  // Add radial streaks for a more dynamic appearance
-  const numStreaks = 200;
+  // Add radial streaks for a more dynamic appearance - but fewer for performance
+  const numStreaks = 100; // Reduced from 200
   for (let i = 0; i < numStreaks; i++) {
     const angle = Math.random() * Math.PI * 2;
     const minRadius = 0.55 * maxRadius;
@@ -511,8 +514,11 @@ export const createDetailedSaturnRingsTexture = () => {
   // Reset composite operation
   ctx.globalCompositeOperation = 'source-over';
   
-  // Create texture
+  // Create texture with optimized settings
   const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = false; // Disable mipmaps for better performance
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
   texture.rotation = Math.PI / 2;
   texture.center = new THREE.Vector2(0.5, 0.5);
   
@@ -521,12 +527,18 @@ export const createDetailedSaturnRingsTexture = () => {
 
 /**
  * Creates a texture for the moon's surface with craters
+ * Optimized version with fewer details and simpler drawing
  */
 export const createMoonTexture = () => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
+  // Use shared offscreen canvas if available, or create a new one
+  const canvas = window.sharedOffscreenCanvas || document.createElement('canvas');
+  if (!window.sharedOffscreenCanvas) {
+    canvas.width = 512; // Reduced size
+    canvas.height = 256; // Reduced size
+  }
+  const ctx = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
+  // Clear the canvas first in case it was used previously
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   
   // Base color - brighter white/gray
   ctx.fillStyle = '#E8E8E8';
@@ -534,14 +546,14 @@ export const createMoonTexture = () => {
   
   // Add darker base regions for maria (lunar seas)
   const maria = [
-    { x: 400, y: 200, radius: 120 }, // Mare Imbrium
-    { x: 550, y: 280, radius: 80 },  // Mare Serenitatis
-    { x: 600, y: 380, radius: 70 },  // Mare Tranquillitatis
-    { x: 650, y: 200, radius: 60 },  // Mare Frigoris
-    { x: 480, y: 350, radius: 90 },  // Mare Nubium
+    { x: 200, y: 100, radius: 60 }, // Mare Imbrium
+    { x: 275, y: 140, radius: 40 },  // Mare Serenitatis
+    { x: 300, y: 190, radius: 35 },  // Mare Tranquillitatis
+    { x: 325, y: 100, radius: 30 },  // Mare Frigoris
+    { x: 240, y: 175, radius: 45 },  // Mare Nubium
   ];
   
-  // Fill maria with slightly darker color - lighter than before
+  // Fill maria with slightly darker color
   ctx.fillStyle = '#C0C0C0';
   maria.forEach(mare => {
     ctx.beginPath();
@@ -549,10 +561,10 @@ export const createMoonTexture = () => {
     ctx.fill();
   });
   
-  // Add craters
-  const craters = 100;
-  for (let i = 0; i < craters; i++) {
-    const size = Math.random() * 30 + 5;
+  // Add fewer craters for better performance
+  const craterCount = 40; // Reduced from 100
+  for (let i = 0; i < craterCount; i++) {
+    const size = Math.random() * 20 + 5; // Slightly smaller craters
     const x = Math.random() * canvas.width;
     const y = Math.random() * canvas.height;
     
@@ -562,22 +574,17 @@ export const createMoonTexture = () => {
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fill();
     
-    // Crater inner area - darker
+    // Crater inner area - darker (simplified to one inner layer)
     ctx.fillStyle = '#999999';
     ctx.beginPath();
-    ctx.arc(x, y, size * 0.85, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Crater floor - darkest
-    ctx.fillStyle = '#888888';
-    ctx.beginPath();
-    ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+    ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
     ctx.fill();
   }
   
-  // Add some small craters for detail
-  for (let i = 0; i < 200; i++) {
-    const size = Math.random() * 8 + 1;
+  // Add very few small craters for detail
+  const smallCraterCount = 60; // Reduced from 200
+  for (let i = 0; i < smallCraterCount; i++) {
+    const size = Math.random() * 5 + 1;
     const x = Math.random() * canvas.width;
     const y = Math.random() * canvas.height;
     
@@ -588,8 +595,12 @@ export const createMoonTexture = () => {
     ctx.fill();
   }
   
-  // Create texture from canvas
+  // Create texture from canvas with optimized settings
   const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = false; // Disable mipmaps for better performance
+  texture.minFilter = THREE.LinearFilter; // Use simple filtering
+  texture.magFilter = THREE.LinearFilter;
+  
   return texture;
 };
 

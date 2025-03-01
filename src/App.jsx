@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
 import planets, { dwarfPlanets } from './data/planets';
-import './App.css';
 
-// Lazy load pages for better performance
-const Home = lazy(() => import('./pages/Home'));
+// Lazy load pages with preload hints to improve loading performance
+const Home = lazy(() => {
+  // Preload lower priority components after main page loads
+  const loaded = import('./pages/Home');
+  loaded.then(() => {
+    // Prefetch components needed after initial render
+    import('./components/celestial/RedSpot');
+    import('./components/celestial/MiniMoon');
+  });
+  return loaded;
+});
 const PlanetPage = lazy(() => import('./pages/PlanetPage'));
 const MoonDetailPage = lazy(() => import('./components/pages/MoonDetailPage'));
 
@@ -209,7 +216,20 @@ function App() {
         </nav>
         
         <main>
-          <Suspense fallback={<div className="loading">Loading...</div>}>
+          <Suspense fallback={
+            <div className="loading">
+              <div className="loader-spinner" style={{
+                border: '5px solid #333',
+                borderTop: '5px solid #3498db',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                animation: 'spin 1s linear infinite',
+                margin: '20px auto'
+              }}></div>
+              <div>Loading solar system...</div>
+            </div>
+          }>
             <Routes>
               <Route path="/" element={<Home planets={planets} dwarfMenuOpen={dwarfMenuOpen} />} />
               <Route 
@@ -220,7 +240,20 @@ function App() {
               />
               <Route 
                 path="/moon/:moonId" 
-                element={<Suspense fallback={<div className="loading">Loading moon details...</div>}>
+                element={<Suspense fallback={
+                  <div className="loading">
+                    <div className="loader-spinner" style={{
+                      border: '5px solid #333',
+                      borderTop: '5px solid #3498db',
+                      borderRadius: '50%',
+                      width: '50px',
+                      height: '50px',
+                      animation: 'spin 1s linear infinite',
+                      margin: '20px auto'
+                    }}></div>
+                    <div>Loading moon details...</div>
+                  </div>
+                }>
                   <MoonDetailPage planets={[...planets, ...dwarfPlanets]} />
                 </Suspense>} 
               />

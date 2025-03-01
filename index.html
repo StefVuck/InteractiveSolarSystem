@@ -5,17 +5,96 @@
     <link rel="icon" type="image/svg+xml" href="/solar-system-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Interactive Solar System</title>
+    <!-- Directly include stylesheets instead of preloading -->
+    <link rel="stylesheet" href="/src/index.css" />
+    <link rel="stylesheet" href="/src/App.css" />
+    
+    <!-- Initial loading screen styling -->
+    <style>
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      .loader-content {
+        text-align: center;
+      }
+      .loader-spinner {
+        border: 5px solid #333;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+    
     <!-- Disable context preservation option which may help with WebGL crashes -->
     <script>
+      // Preload critical fonts and modules using JavaScript instead of link tags
+      function preloadCriticalAssets() {
+        // Use fetch with low priority to preload key modules
+        fetch('/src/main.jsx', { 
+          method: 'GET',
+          priority: 'low',
+          credentials: 'same-origin'
+        });
+        
+        // Preload THREE.js as it's a large dependency
+        const threePreload = document.createElement('link');
+        threePreload.rel = 'modulepreload';
+        threePreload.href = '/node_modules/three/build/three.module.js';
+        threePreload.crossOrigin = 'anonymous';
+        document.head.appendChild(threePreload);
+      }
+      
+      // Call preload function
+      preloadCriticalAssets();
+      
       window.addEventListener('load', function() {
         // Set renderer parameters to minimize crashes
         if (window.THREE) {
           THREE.WebGLRenderer.disableProgramCache = true;
         }
+        
+        // Remove initial loader after components load
+        setTimeout(function() {
+          const loader = document.getElementById('initial-loader');
+          if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.5s ease';
+            setTimeout(function() {
+              loader.style.display = 'none';
+            }, 500);
+          }
+        }, 1000);
       });
     </script>
   </head>
   <body>
+    <!-- Initial loading indicator that shows before React mounts -->
+    <div id="initial-loader" class="initial-loader">
+      <div class="loader-content">
+        <div class="loader-spinner"></div>
+        <h2>Loading Solar System...</h2>
+        <p>Preparing celestial bodies</p>
+      </div>
+    </div>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
