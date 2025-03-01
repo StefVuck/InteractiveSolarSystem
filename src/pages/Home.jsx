@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
+import { OrbitControls, Stars, Line } from '@react-three/drei';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 
@@ -103,24 +103,36 @@ function DwarfPlanetOrbit({ dwarfPlanet, orbitalSpeed, children }) {
 /**
  * Home component showing the entire solar system
  */
-function Home({ planets }) {
+function Home({ planets, dwarfMenuOpen }) {
   const navigate = useNavigate();
   const [cameraPosition, setCameraPosition] = useState([0, 10, 30]); // Moved further back
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showOrbitLines, setShowOrbitLines] = useState(true); // Toggle for orbit lines
+  const [showFacts, setShowFacts] = useState(true); // Toggle for astronomy facts
   
   // Get planet size based on relative real-world sizes
   const getPlanetSize = (planetId) => {
     const sizes = {
-      'mercury': 0.38,  // Smallest
-      'venus': 0.95,    // Similar to Earth
-      'earth': 1.0,     // Reference size
-      'mars': 0.53,     // About half of Earth
-      'jupiter': 2.5,   // Much larger
-      'saturn': 2.2,    // Second largest
-      'uranus': 1.8,    // Ice giant
-      'neptune': 1.7    // Ice giant
+      'mercury': 0.38,   // 0.38× Earth's diameter
+      'venus': 0.95,     // 0.95× Earth's diameter
+      'earth': 1.0,      // Reference size
+      'mars': 0.53,      // 0.53× Earth's diameter
+      'jupiter': 11.2,   // 11.2× Earth's diameter
+      'saturn': 9.5,     // 9.5× Earth's diameter
+      'uranus': 4.0,     // 4.0× Earth's diameter
+      'neptune': 3.9     // 3.9× Earth's diameter
     };
-    return (sizes[planetId] || 1.0) * 0.5; // Base scale factor of 0.5
+    
+    // We need to scale the sizes to fit the scene
+    // Use 0.5 scaling for terrestrial planets, but even smaller for gas giants
+    const baseScaleFactor = 0.5;
+    const gasGiantScaleFactor = 0.12; // Much smaller scale for gas giants to fit in scene
+    
+    if (['jupiter', 'saturn', 'uranus', 'neptune'].includes(planetId)) {
+      return sizes[planetId] * gasGiantScaleFactor;
+    } else {
+      return (sizes[planetId] || 1.0) * baseScaleFactor;
+    }
   };
   
   // Get planet orbit distance from sun
@@ -188,8 +200,56 @@ function Home({ planets }) {
     }, 1000);
   };
   
+  // Toggle orbit lines visibility
+  const toggleOrbitLines = () => {
+    setShowOrbitLines(!showOrbitLines);
+  };
+
+  // Toggle astronomy facts visibility
+  const toggleFacts = () => {
+    setShowFacts(!showFacts);
+  };
+
+  // Button style creator to maintain consistent styling
+  const createButtonStyle = (isActive) => ({
+    background: isActive ? '#3366cc' : '#444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '6px 12px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontFamily: 'sans-serif',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    marginLeft: '5px'
+  });
+
   return (
     <div style={{ width: '100%', height: 'calc(100vh - 60px)' }}>
+      {/* Toggle Buttons - adjust position when dwarf menu is open */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '5px', 
+        right: dwarfMenuOpen ? '170px' : '10px', // Move left when menu is open
+        zIndex: 100,
+        display: 'flex',
+        gap: '5px',
+        transition: 'right 0.3s ease-in-out' // Smooth transition effect
+      }}>
+        <button 
+          onClick={toggleOrbitLines}
+          style={createButtonStyle(showOrbitLines)}
+        >
+          {showOrbitLines ? 'Hide Orbits' : 'Show Orbits'}
+        </button>
+        <button 
+          onClick={toggleFacts}
+          style={createButtonStyle(showFacts)}
+        >
+          {showFacts ? 'Hide Facts' : 'Show Facts'}
+        </button>
+      </div>
+
       <Canvas 
         camera={{ position: cameraPosition, fov: 40 }}  // Reduced FOV to see more
         gl={{ 
@@ -259,21 +319,75 @@ function Home({ planets }) {
           color="#777777"
         />
         
-        {/* Orbiting Facts */}
-        <OrbitingFacts facts={astronomyFacts} maxActive={5} scene="solar-system" />
+        {/* Orbiting Facts - conditionally rendered */}
+        {showFacts && <OrbitingFacts facts={astronomyFacts} maxActive={5} scene="solar-system" />}
         
-        {/* Orbit rings */}
-        {planets.map((planet, index) => {
+        {/* Orbit paths for regular planets - using Line component for consistency */}
+        {showOrbitLines && planets.map((planet, index) => {
           const distance = getPlanetOrbitRadius(index);
+          
+          // Create points for a circular path
+          const segments = 128;
+          const points = [];
+          
+          for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const x = Math.cos(angle) * distance;
+            const z = Math.sin(angle) * distance;
+            // Regular planets have zero inclination
+            points.push([x, 0, z]);
+          }
+          
           return (
-            <mesh 
-              key={`orbit-${planet.id}`} 
-              position={[0, 0, 0]} 
-              rotation={[Math.PI / 2, 0, 0]}
-            >
-              <ringGeometry args={[distance - 0.05, distance + 0.05, 64]} />
-              <meshBasicMaterial color="#444444" transparent opacity={0.3} />
-            </mesh>
+            <Line
+              key={`orbit-path-${planet.id}`}
+              points={points}
+              color="#AAAAAA"
+              lineWidth={1}
+              transparent
+              opacity={0.3}
+            />
+          );
+        })}
+        
+        {/* Orbit paths for dwarf planets - only visible when dwarf menu is open */}
+        {showOrbitLines && dwarfMenuOpen && dwarfPlanets.map((dwarfPlanet) => {
+          const distance = dwarfPlanet.orbitRadius;
+          
+          // Get base Y position for each dwarf planet
+          const baseY = dwarfPlanet.id === 'ceres' ? 3 : 
+                       dwarfPlanet.id === 'pluto' ? -4 :
+                       dwarfPlanet.id === 'haumea' ? 6 :
+                       -7; // Makemake
+                       
+          // Add inclination to the orbit rings
+          const inclination = dwarfPlanet.id === 'pluto' ? Math.PI * 0.1 : // 17-degree inclination
+                              dwarfPlanet.id === 'haumea' ? Math.PI * 0.14 : // ~25-degree inclination
+                              dwarfPlanet.id === 'makemake' ? Math.PI * 0.12 : // ~22-degree inclination
+                              0; // Ceres has nearly 0 inclination
+          
+          // Create points for a circular path with the correct inclination
+          const segments = 128;
+          const points = [];
+          
+          for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const x = Math.cos(angle) * distance;
+            const z = Math.sin(angle) * distance;
+            // Apply inclination to y coordinate - this creates the tilted orbit
+            const y = baseY + Math.sin(angle) * Math.sin(inclination) * distance * 0.2;
+            points.push([x, y, z]);
+          }
+          
+          return (
+            <Line
+              key={`orbit-path-${dwarfPlanet.id}`}
+              points={points}
+              color="#555555"
+              lineWidth={1}
+              transparent
+              opacity={0.3}
+            />
           );
         })}
         

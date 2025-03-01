@@ -43,10 +43,13 @@ function App() {
     
     // Check for double click (two clicks within 300ms)
     if (now - lastClickTime < 300) {
+      // Toggle the dwarf menu without affecting other states
       setDwarfMenuOpen(!dwarfMenuOpen);
       setClickCount(0);
-      // Close any open moons dropdown
-      setMoonsDropdownFor(null);
+      // Only close moon dropdown, but preserve other UI states
+      if (moonsDropdownFor) {
+        setMoonsDropdownFor(null);
+      }
     } else {
       setClickCount(clickCount + 1);
     }
@@ -208,7 +211,7 @@ function App() {
         <main>
           <Suspense fallback={<div className="loading">Loading...</div>}>
             <Routes>
-              <Route path="/" element={<Home planets={planets} />} />
+              <Route path="/" element={<Home planets={planets} dwarfMenuOpen={dwarfMenuOpen} />} />
               <Route 
                 path="/planet/:planetId" 
                 element={<PlanetPage 
