@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
@@ -19,11 +19,93 @@ import { dwarfPlanets } from '../data/planets';
 import { createDetailedSaturnRingsTexture } from '../utils/textureGenerators';
 
 /**
+ * Planet Animation component for planetary rotation
+ */
+function PlanetOrbit({ planetId, planetIndex, orbitRadius, orbitalSpeed, children }) {
+  const ref = useRef();
+  const angle = useRef((planetIndex / 8) * Math.PI * 2); // Initial angle based on planet position
+  
+  useFrame(() => {
+    // Update angle
+    angle.current += orbitalSpeed;
+    
+    // Calculate position on orbit
+    const x = Math.cos(angle.current) * orbitRadius;
+    const z = Math.sin(angle.current) * orbitRadius;
+    
+    // Update position
+    if (ref.current) {
+      ref.current.position.x = x;
+      ref.current.position.z = z;
+    }
+  });
+  
+  return (
+    <group ref={ref} position={[Math.cos(angle.current) * orbitRadius, 0, Math.sin(angle.current) * orbitRadius]}>
+      {children}
+    </group>
+  );
+}
+
+/**
+ * Dwarf Planet Animation component with inclined orbit
+ */
+function DwarfPlanetOrbit({ dwarfPlanet, orbitalSpeed, children }) {
+  const ref = useRef();
+  
+  // Starting angle based on dwarf planet ID
+  const angle = useRef(
+    dwarfPlanet.id === 'pluto' ? Math.PI * 0.3 : 
+    dwarfPlanet.id === 'ceres' ? Math.PI * 0.8 :
+    dwarfPlanet.id === 'haumea' ? Math.PI * 1.2 :
+    Math.PI * 1.7 // Makemake
+  );
+  
+  const baseY = dwarfPlanet.id === 'ceres' ? 3 : 
+              dwarfPlanet.id === 'pluto' ? -4 :
+              dwarfPlanet.id === 'haumea' ? 6 :
+              -7; // Makemake
+              
+  const inclination = dwarfPlanet.id === 'pluto' ? Math.PI * 0.1 : // 17-degree inclination
+                     dwarfPlanet.id === 'haumea' ? Math.PI * 0.14 : // ~25-degree inclination
+                     dwarfPlanet.id === 'makemake' ? Math.PI * 0.12 : // ~22-degree inclination
+                     0; // Ceres has nearly 0 inclination
+  
+  useFrame(() => {
+    // Update angle
+    angle.current += orbitalSpeed;
+    
+    // Calculate position with inclination
+    const x = Math.cos(angle.current) * dwarfPlanet.orbitRadius;
+    const z = Math.sin(angle.current) * dwarfPlanet.orbitRadius;
+    const adjustedY = baseY + Math.sin(angle.current) * Math.sin(inclination) * dwarfPlanet.orbitRadius * 0.2;
+    
+    // Update position
+    if (ref.current) {
+      ref.current.position.x = x;
+      ref.current.position.y = adjustedY;
+      ref.current.position.z = z;
+    }
+  });
+  
+  // Calculate initial position with inclination for first render
+  const initialX = Math.cos(angle.current) * dwarfPlanet.orbitRadius;
+  const initialZ = Math.sin(angle.current) * dwarfPlanet.orbitRadius;
+  const initialY = baseY + Math.sin(angle.current) * Math.sin(inclination) * dwarfPlanet.orbitRadius * 0.2;
+  
+  return (
+    <group ref={ref} position={[initialX, initialY, initialZ]}>
+      {children}
+    </group>
+  );
+}
+
+/**
  * Home component showing the entire solar system
  */
 function Home({ planets }) {
   const navigate = useNavigate();
-  const [cameraPosition, setCameraPosition] = useState([0, 10, 20]);
+  const [cameraPosition, setCameraPosition] = useState([0, 10, 30]); // Moved further back
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Get planet size based on relative real-world sizes
@@ -43,19 +125,19 @@ function Home({ planets }) {
   
   // Get planet orbit distance from sun
   const getPlanetOrbitRadius = (index) => {
-    // More spaced out orbits
+    // More spaced out orbits - increased by 1.5x
     const distances = [
-      7.5,    // Mercury - closer to sun
-      11.25,  // Venus
-      15,     // Earth
-      19.5,   // Mars
-      31.5,   // Jupiter (after asteroid belt)
-      39,     // Saturn
-      48,     // Uranus
-      57      // Neptune
+      11.25,   // Mercury - closer to sun (was 7.5)
+      16.875,  // Venus (was 11.25)
+      22.5,    // Earth (was 15)
+      29.25,   // Mars (was 19.5)
+      47.25,   // Jupiter (after asteroid belt) (was 31.5)
+      58.5,    // Saturn (was 39)
+      72,      // Uranus (was 48)
+      85.5     // Neptune (was 57)
     ];
     
-    return distances[index] || (7.5 + index * 6); // Also adjusted the fallback calculation
+    return distances[index] || (11.25 + index * 9); // Also adjusted the fallback calculation
   };
   
   // Check if planet has rings
@@ -109,10 +191,10 @@ function Home({ planets }) {
   return (
     <div style={{ width: '100%', height: 'calc(100vh - 60px)' }}>
       <Canvas 
-        camera={{ position: cameraPosition, fov: 45 }}
+        camera={{ position: cameraPosition, fov: 40 }}  // Reduced FOV to see more
         gl={{ 
           powerPreference: 'default', 
-          antialias: false,
+          antialias: true,  // Enabled for smoother orbit lines
           depth: true,
           stencil: false,
           alpha: false
@@ -162,16 +244,16 @@ function Home({ planets }) {
         {/* Asteroid Belts */}
         {/* Main Belt between Mars and Jupiter */}
         <AsteroidBelt 
-          innerRadius={24} 
-          outerRadius={28.5} 
+          innerRadius={36} 
+          outerRadius={42.75} 
           count={140} 
           name="Main Asteroid Belt" 
         />
         
         {/* Kuiper Belt beyond Neptune */}
         <AsteroidBelt 
-          innerRadius={63} 
-          outerRadius={75} 
+          innerRadius={94.5} 
+          outerRadius={112.5} 
           count={80} 
           name="Kuiper Belt" 
           color="#777777"
@@ -197,11 +279,26 @@ function Home({ planets }) {
         
         {/* Planets */}
         {planets.map((planet, index) => {
-          // Calculate position in a circle around the sun
-          const angle = (index / planets.length) * Math.PI * 2;
-          const distance = getPlanetOrbitRadius(index); // More spaced out distances
-          const x = Math.cos(angle) * distance;
-          const z = Math.sin(angle) * distance;
+          // Get orbital properties
+          const orbitRadius = getPlanetOrbitRadius(index);
+          
+          // Get orbital speeds based on real astronomical data (scaled for animation)
+          const getOrbitalSpeed = (planetId) => {
+            // These values are scaled for visible animation
+            // Actual orbital periods range from 88 days (Mercury) to 165 years (Neptune)
+            const orbitalSpeeds = {
+              'mercury': 0.003, // Fastest
+              'venus': 0.002,
+              'earth': 0.0015,
+              'mars': 0.00125,
+              'jupiter': 0.00075,
+              'saturn': 0.0005,
+              'uranus': 0.0004,
+              'neptune': 0.0003 // Slowest
+            };
+            
+            return orbitalSpeeds[planetId] || 0.001;
+          };
           
           // Determine planet size based on its actual relative size
           const planetSize = getPlanetSize(planet.id);
@@ -210,9 +307,15 @@ function Home({ planets }) {
           const ringProps = hasRings(planet.id) ? getRingProps(planet.id) : {};
           
           return (
-            <group key={planet.id}>
+            <PlanetOrbit
+              key={`planet-orbit-${planet.id}`}
+              planetId={planet.id}
+              planetIndex={index}
+              orbitRadius={orbitRadius}
+              orbitalSpeed={getOrbitalSpeed(planet.id)}
+            >
               <EnhancedPlanet 
-                position={[x, 0, z]} 
+                position={[0, 0, 0]} 
                 color={planet.color} 
                 size={planetSize}
                 name={planet.name}
@@ -228,43 +331,44 @@ function Home({ planets }) {
               {/* Add moon to Earth */}
               {planet.id === 'earth' && (
                 <MiniMoon 
-                  parentPosition={[x, 0, z]} 
-                  parentSize={planetSize} 
+                  parentPosition={[0, 0, 0]} 
+                  parentSize={planetSize}
                 />
               )}
               
               {/* Add Great Red Spot to Jupiter */}
               {planet.id === 'jupiter' && (
                 <RedSpot 
-                  parentPosition={[x, 0, z]} 
+                  parentPosition={[0, 0, 0]} 
                   parentSize={planetSize}
                 />
               )}
-            </group>
+            </PlanetOrbit>
           );
         })}
         
         {/* Easter Egg: Dwarf Planets - Hidden from UI */}
         {dwarfPlanets.map((dwarfPlanet) => {
-          // Use the orbit radius directly from the dwarf planet data
-          // Each dwarf planet gets a fixed position on their orbit for consistency
-          const angle = dwarfPlanet.id === 'pluto' ? Math.PI * 0.3 : 
-                       dwarfPlanet.id === 'ceres' ? Math.PI * 0.8 :
-                       dwarfPlanet.id === 'haumea' ? Math.PI * 1.2 :
-                       Math.PI * 1.7; // Makemake
-                       
-          const x = Math.cos(angle) * dwarfPlanet.orbitRadius;
-          const z = Math.sin(angle) * dwarfPlanet.orbitRadius;
-          const y = dwarfPlanet.id === 'ceres' ? 3 : 
-                   dwarfPlanet.id === 'pluto' ? -4 :
-                   dwarfPlanet.id === 'haumea' ? 6 :
-                   -7; // Distinct heights to make them more noticeable
+          // Get dwarf planet orbital speeds
+          const getDwarfPlanetOrbitalSpeed = (dwarfPlanetId) => {
+            const orbitalSpeeds = {
+              'pluto': 0.0002,
+              'ceres': 0.0009,
+              'haumea': 0.00018,
+              'makemake': 0.00015
+            };
+            
+            return orbitalSpeeds[dwarfPlanetId] || 0.0005;
+          };
           
           return (
-            <group key={dwarfPlanet.id}>
+            <DwarfPlanetOrbit
+              key={dwarfPlanet.id}
+              dwarfPlanet={dwarfPlanet}
+              orbitalSpeed={getDwarfPlanetOrbitalSpeed(dwarfPlanet.id)}
+            >
               {/* Ambient glow to make them more visible */}
               <pointLight 
-                position={[x, y, z]} 
                 intensity={0.5} 
                 distance={3} 
                 color={dwarfPlanet.id === 'pluto' ? "#B8C0FF" : 
@@ -274,35 +378,28 @@ function Home({ planets }) {
               />
               
               <mesh
-                position={[x, y, z]}
                 onClick={() => handlePlanetClick(dwarfPlanet.id)}
                 scale={[1.5, 1.5, 1.5]} // Make them slightly larger to be more visible
                 userData={{ isEasterEgg: true }}
                 onPointerOver={(e) => {
-                  // Enhance the visibility of the label text when hovered
-                  e.object.parent.children.forEach(child => {
-                    if (child.type === 'Text' && child.userData.isDwarfPlanet && 
-                        child.userData.id === dwarfPlanet.id) {
-                      // Make text more visible on hover
-                      if (child.material) {
-                        child.material.opacity = 1.0;
-                        child.material.color.set('#FFFFFF');
-                      }
-                    }
-                  });
+                  // Find the label and make it more visible
+                  const textElement = e.object.parent.children.find(
+                    child => child.type === 'Object3D' && child.userData.isLabel
+                  );
+                  if (textElement && textElement.material) {
+                    textElement.material.opacity = 1.0;
+                    textElement.material.color.set('#FFFFFF');
+                  }
                 }}
                 onPointerOut={(e) => {
-                  // Return text to subtle appearance
-                  e.object.parent.children.forEach(child => {
-                    if (child.type === 'Text' && child.userData.isDwarfPlanet &&
-                        child.userData.id === dwarfPlanet.id) {
-                      // Return to subtle appearance
-                      if (child.material) {
-                        child.material.opacity = 0.5;
-                        child.material.color.set('#777777');
-                      }
-                    }
-                  });
+                  // Find the label and reset visibility
+                  const textElement = e.object.parent.children.find(
+                    child => child.type === 'Object3D' && child.userData.isLabel
+                  );
+                  if (textElement && textElement.material) {
+                    textElement.material.opacity = 0.5;
+                    textElement.material.color.set('#777777');
+                  }
                 }}
               >
                 <sphereGeometry args={[dwarfPlanet.size, 16, 16]} />
@@ -316,7 +413,7 @@ function Home({ planets }) {
               </mesh>
               
               {/* Add glow effect around the dwarf planet */}
-              <mesh position={[x, y, z]} scale={[1.8, 1.8, 1.8]}>
+              <mesh scale={[1.8, 1.8, 1.8]}>
                 <sphereGeometry args={[dwarfPlanet.size, 8, 8]} />
                 <meshBasicMaterial
                   color={dwarfPlanet.color}
@@ -328,7 +425,7 @@ function Home({ planets }) {
               
               {/* Always visible but very subtle name - with horizontal-only rotation */}
               <HorizontalText
-                position={[x, y + dwarfPlanet.size*1.5 + 0.5, z]} // Slightly higher position
+                position={[0, dwarfPlanet.size*1.5 + 0.5, 0]} // Relative position to parent group
                 fontSize={0.25} // Much smaller text
                 color="#777777" // Gray color to blend with background
                 anchorX="center"
@@ -336,20 +433,20 @@ function Home({ planets }) {
                 material-opacity={0.5} // Apply opacity directly to material
                 material-transparent={true} // Ensure transparency works
                 visible={true} // Always visible but hard to see
-                userData={{ isDwarfPlanet: true, id: dwarfPlanet.id }}
+                userData={{ isLabel: true, id: dwarfPlanet.id }}
                 renderOrder={10} // Ensure text renders on top
               >
                 {dwarfPlanet.name}
               </HorizontalText>
-            </group>
+            </DwarfPlanetOrbit>
           );
         })}
         
         {/* Voyager 1 - Position relative to Jupiter's distance */}
         <Spacecraft
           position={[
-            Math.cos(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5), // 2.5x Jupiter's distance
-            8, // Above the plane
+            Math.cos(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5), // 2.5x Jupiter's distance (automatically scaled with the new orbits)
+            12, // Above the plane (increased from 8)
             Math.sin(Math.PI * 0.2) * (getPlanetOrbitRadius(4) * 2.5)
           ]}
           name="Voyager 1"
@@ -393,8 +490,8 @@ function Home({ planets }) {
         {/* Voyager 2 - Position relative to Jupiter's distance, different direction */}
         <Spacecraft
           position={[
-            Math.cos(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2), // 2.2x Jupiter's distance
-            -6, // Below the plane
+            Math.cos(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2), // 2.2x Jupiter's distance (automatically scaled with the new orbits)
+            -9, // Below the plane (increased from -6)
             Math.sin(Math.PI * 1.7) * (getPlanetOrbitRadius(4) * 2.2)
           ]}
           name="Voyager 2"
