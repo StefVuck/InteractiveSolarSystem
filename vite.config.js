@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { splitVendorChunkPlugin } from 'vite'
+// Removed the splitVendorChunkPlugin since we're using manualChunks as a function
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
-    splitVendorChunkPlugin() // Split chunks for better loading performance
+    react()
+    // Removed the splitVendorChunkPlugin since it's not compatible with manualChunks
   ],
   server: {
     open: true,
@@ -23,9 +23,23 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+        // Use function form for manualChunks instead of object form
+        manualChunks: (id) => {
+          // React and related libraries
+          if (id.includes('node_modules/react') || 
+              id.includes('node_modules/react-dom') || 
+              id.includes('node_modules/react-router-dom')) {
+            return 'react-vendor';
+          }
+          
+          // Three.js and related libraries
+          if (id.includes('node_modules/three') || 
+              id.includes('node_modules/@react-three/fiber') || 
+              id.includes('node_modules/@react-three/drei')) {
+            return 'three-vendor';
+          }
+          
+          // Other dependencies will be auto-chunked by Vite
         }
       }
     }

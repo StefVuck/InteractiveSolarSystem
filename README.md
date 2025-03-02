@@ -142,6 +142,10 @@ Add new spacecraft or satellites by following the pattern in the `Spacecraft` co
 ### Performance Tuning
 
 The application has been optimized for stable WebGL performance by:
+- Implementing fast initial loading with direct component rendering
+- Using effective texture caching and reuse through shared canvas
+- Disabling unnecessary Three.js features like shadows during load
+- Setting appropriate device pixel ratios for balance of quality and speed
 - Limiting asteroid and particle counts
 - Optimizing lighting and shadow calculations
 - Reducing geometry complexity where appropriate
@@ -150,6 +154,8 @@ The application has been optimized for stable WebGL performance by:
 - Separating complex rendering into dedicated components
 - Adding subtle glow effects that enhance visibility without impacting performance
 - Implementing adaptive detail levels based on viewing distance and device capabilities
+- Using continuous rendering with proper optimization for WebGL context
+- Fallback loader removal to ensure smooth user experience
 
 ## License
 GPLv3

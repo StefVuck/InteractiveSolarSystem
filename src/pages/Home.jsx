@@ -1,23 +1,23 @@
-import React, { useState, useMemo, useRef, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useMemo, useRef, useEffect, Suspense, lazy, useLayoutEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars, Line } from '@react-three/drei';
+import { OrbitControls, Line, Stars } from '@react-three/drei';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 
-// Performance Component
+// Performance Component with balanced settings
 function PerformanceMonitor() {
   const { gl } = useThree();
   
   useEffect(() => {
-    // Keep sRGB encoding for color correctness but optimize other settings
+    // Keep sRGB encoding for color correctness
     gl.outputEncoding = THREE.sRGBEncoding;
     gl.physicallyCorrectLights = false;
     
-    // Enable WebGL optimizations for texture loading
-    const renderer = gl.getContext();
-    if (renderer) {
-      renderer.powerPreference = 'high-performance';
-    }
+    // Only disable shadows
+    gl.shadowMap.enabled = false;
+    
+    // Force immediate first render to reduce perceived loading time
+    gl.renderLists.dispose();
   }, [gl]);
   
   return null;
@@ -129,8 +129,9 @@ function Home({ planets, dwarfMenuOpen }) {
   const [showOrbitLines, setShowOrbitLines] = useState(true); // Toggle for orbit lines
   const [showFacts, setShowFacts] = useState(true); // Toggle for astronomy facts
   
-  // Get planet size based on relative real-world sizes
-  const getPlanetSize = (planetId) => {
+  // Memoize planet size calculations to avoid recalculating on every render
+  const getPlanetSize = useMemo(() => {
+    // Define sizes once
     const sizes = {
       'mercury': 0.38,   // 0.38× Earth's diameter
       'venus': 0.95,     // 0.95× Earth's diameter
@@ -147,15 +148,18 @@ function Home({ planets, dwarfMenuOpen }) {
     const baseScaleFactor = 0.5;
     const gasGiantScaleFactor = 0.12; // Much smaller scale for gas giants to fit in scene
     
-    if (['jupiter', 'saturn', 'uranus', 'neptune'].includes(planetId)) {
-      return sizes[planetId] * gasGiantScaleFactor;
-    } else {
-      return (sizes[planetId] || 1.0) * baseScaleFactor;
-    }
-  };
+    // Create and return a cached calculation function
+    return (planetId) => {
+      if (['jupiter', 'saturn', 'uranus', 'neptune'].includes(planetId)) {
+        return sizes[planetId] * gasGiantScaleFactor;
+      } else {
+        return (sizes[planetId] || 1.0) * baseScaleFactor;
+      }
+    };
+  }, []);
   
-  // Get planet orbit distance from sun
-  const getPlanetOrbitRadius = (index) => {
+  // Memoize orbit calculations for better performance
+  const getPlanetOrbitRadius = useMemo(() => {
     // More spaced out orbits - increased by 1.5x
     const distances = [
       11.25,   // Mercury - closer to sun (was 7.5)
@@ -168,16 +172,31 @@ function Home({ planets, dwarfMenuOpen }) {
       85.5     // Neptune (was 57)
     ];
     
-    return distances[index] || (11.25 + index * 9); // Also adjusted the fallback calculation
-  };
+    // Return memoized function
+    return (index) => distances[index] || (11.25 + index * 9);
+  }, []);
   
   // Check if planet has rings
   const hasRings = (planetId) => {
     return ['saturn', 'uranus'].includes(planetId);
   };
   
-  // Create Saturn's ring texture once for reuse
-  const saturnRingsTexture = useMemo(() => createDetailedSaturnRingsTexture(), []);
+  // Use a precomputed texture or create it lazily
+  const saturnRingsTexture = useMemo(() => {
+    // Check if there's a cached version in window
+    if (window.cachedTextures && window.cachedTextures.saturnRings) {
+      return window.cachedTextures.saturnRings;
+    }
+    
+    // Create and cache the texture
+    const texture = createDetailedSaturnRingsTexture();
+    
+    // Store in a global cache to avoid regenerating in other components
+    if (!window.cachedTextures) window.cachedTextures = {};
+    window.cachedTextures.saturnRings = texture;
+    
+    return texture;
+  }, []);
   
   // Get ring properties
   const getRingProps = (planetId) => {
@@ -273,13 +292,13 @@ function Home({ planets, dwarfMenuOpen }) {
         camera={{ position: cameraPosition, fov: 40 }}  // Reduced FOV to see more
         gl={{ 
           powerPreference: 'high-performance', 
-          antialias: false,  // Disabled for initial load performance
+          antialias: true,  // Re-enabled for visual quality
           depth: true,
           stencil: false,
           alpha: false
         }}
-        dpr={[1, 2]} // Limit pixel ratio for better performance
-        performance={{ min: 0.5 }} // Allow frame rate to drop during heavy loads
+        dpr={[1, 2]} // Restored for visual quality
+        frameloop="always" // Keep continuous rendering for responsiveness
         >
         <PerformanceMonitor />
         <ambientLight intensity={0.3} /> {/* Reduced to make night side darker */}
@@ -327,8 +346,8 @@ function Home({ planets, dwarfMenuOpen }) {
         <pointLight position={[0, 0, 0]} intensity={1.5} distance={120} decay={1.8} color="#FFCC00" />
         <pointLight position={[0, 0, 0]} intensity={1.0} distance={80} decay={1.5} color="#FFD700" />
         
-        {/* Background stars - minimal count for stability */}
-        <Stars radius={100} depth={50} count={1500} factor={3} saturation={0} fade={true} />
+        {/* Background stars - simplified for performance */}
+        <Stars radius={100} depth={50} count={800} factor={3} saturation={0} fade={true} />
         
         {/* Asteroid Belts */}
         <Suspense fallback={null}>

@@ -45,25 +45,74 @@
     
     <!-- Disable context preservation option which may help with WebGL crashes -->
     <script>
-      // Preload critical fonts and modules using JavaScript instead of link tags
+      // Preload critical resources using Resource Hints API
       function preloadCriticalAssets() {
-        // Use fetch with low priority to preload key modules
-        fetch('/src/main.jsx', { 
-          method: 'GET',
-          priority: 'low',
-          credentials: 'same-origin'
+        // Create and append all modulepreload links in one batch
+        const criticalModules = [
+          '/src/main.jsx',
+          '/node_modules/three/build/three.module.js'
+          // Fixed: Remove non-existent paths that cause 404 errors
+        ];
+        
+        const fragment = document.createDocumentFragment();
+        
+        criticalModules.forEach(module => {
+          const link = document.createElement('link');
+          link.rel = 'modulepreload';
+          link.href = module;
+          link.crossOrigin = 'anonymous';
+          fragment.appendChild(link);
         });
         
-        // Preload THREE.js as it's a large dependency
-        const threePreload = document.createElement('link');
-        threePreload.rel = 'modulepreload';
-        threePreload.href = '/node_modules/three/build/three.module.js';
-        threePreload.crossOrigin = 'anonymous';
-        document.head.appendChild(threePreload);
+        document.head.appendChild(fragment);
       }
       
-      // Call preload function
+      // High-priority preload immediately on script execution
       preloadCriticalAssets();
+      
+      // Initialize WebGL context early to speed up WebGL initialization
+      function initializeWebGL() {
+        // Wait for DOM to be ready before creating canvas
+        if (document.readyState === 'loading') {
+          return null; // Will initialize later when DOM ready
+        }
+        
+        try {
+          // Create a hidden canvas to start WebGL initialization
+          const canvas = document.createElement('canvas');
+          canvas.style.position = 'absolute';
+          canvas.style.width = '1px';
+          canvas.style.height = '1px';
+          canvas.style.opacity = '0';
+          
+          // Make sure body exists before appending
+          if (document.body) {
+            document.body.appendChild(canvas);
+            
+            // Get WebGL context - just initializing will help subsequent WebGL calls
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+            if (gl) {
+              // Set basic params
+              gl.enable(gl.DEPTH_TEST);
+              gl.clearColor(0, 0, 0, 1);
+              gl.clear(gl.COLOR_BUFFER_BIT);
+            }
+            
+            return gl;
+          }
+        } catch (e) {
+          console.warn('WebGL pre-initialization failed, will retry later', e);
+        }
+        return null;
+      }
+      
+      // Try to initialize WebGL, but will do it properly when DOM is ready
+      let gl = null;
+      
+      // Safe initialization after DOM is ready
+      document.addEventListener('DOMContentLoaded', function() {
+        gl = initializeWebGL();
+      });
       
       window.addEventListener('load', function() {
         // Set renderer parameters to minimize crashes
@@ -71,17 +120,8 @@
           THREE.WebGLRenderer.disableProgramCache = true;
         }
         
-        // Remove initial loader after components load
-        setTimeout(function() {
-          const loader = document.getElementById('initial-loader');
-          if (loader) {
-            loader.style.opacity = '0';
-            loader.style.transition = 'opacity 0.5s ease';
-            setTimeout(function() {
-              loader.style.display = 'none';
-            }, 500);
-          }
-        }, 1000);
+        // Let React handle the loader removal now
+        // Most loader removal now happens in main.jsx
       });
     </script>
   </head>
@@ -92,6 +132,19 @@
         <div class="loader-spinner"></div>
         <h2>Loading Solar System...</h2>
         <p>Preparing celestial bodies</p>
+        <script>
+          // Force loader removal after a reasonable timeout
+          setTimeout(function() {
+            var loader = document.getElementById('initial-loader');
+            if (loader && loader.parentNode) {
+              loader.style.opacity = '0';
+              loader.style.transition = 'opacity 0.5s ease';
+              setTimeout(function() {
+                if (loader.parentNode) loader.parentNode.removeChild(loader);
+              }, 500);
+            }
+          }, 3000); // 3 second fallback
+        </script>
       </div>
     </div>
     

@@ -522,6 +522,10 @@ export const createDetailedSaturnRingsTexture = () => {
   texture.rotation = Math.PI / 2;
   texture.center = new THREE.Vector2(0.5, 0.5);
   
+  // High optimization: Tell Three.js this texture is already in GPU format
+  // This avoids expensive color space conversions
+  texture.colorSpace = THREE.NoColorSpace;
+  
   return texture;
 };
 
@@ -600,6 +604,7 @@ export const createMoonTexture = () => {
   texture.generateMipmaps = false; // Disable mipmaps for better performance
   texture.minFilter = THREE.LinearFilter; // Use simple filtering
   texture.magFilter = THREE.LinearFilter;
+  texture.colorSpace = THREE.NoColorSpace; // Avoid color space conversion
   
   return texture;
 };

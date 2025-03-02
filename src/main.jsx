@@ -21,20 +21,48 @@ offscreenCanvas.width = 512;
 offscreenCanvas.height = 512;
 window.sharedOffscreenCanvas = offscreenCanvas;
 
-// Mount app
+// Preload critical resources before mounting
+const preloadCriticalAssets = () => {
+  // Safer preloading with try-catch around each import
+  const promises = [];
+  
+  // Only preload the main THREE module
+  try {
+    promises.push(import('three'));
+  } catch (err) {
+    console.warn('Error preloading THREE module:', err);
+  }
+  
+  return promises.length ? Promise.all(promises) : Promise.resolve();
+};
+
+// Mount app with eager initialization
 const rootElement = document.getElementById('root')
 
 if (rootElement) {
   if (isDev) console.log('Root element found, mounting app')
   
-  // Removed StrictMode which can cause components to render twice
-  createRoot(rootElement).render(<App />)
+    // Don't wait for preloading to complete - render immediately
+  const root = createRoot(rootElement);
+  root.render(<App />);
   
-  // Clean up initial loader after React hydrates
+  // Continue preloading in background
+  preloadCriticalAssets();
+  
+  // Simplified loader removal - just wait for a bit
   setTimeout(() => {
-    const initialLoader = document.getElementById('initial-loader')
-    if (initialLoader) initialLoader.remove()
-  }, 1500)
+    const initialLoader = document.getElementById('initial-loader');
+    if (initialLoader && initialLoader.parentNode) {
+      initialLoader.style.opacity = '0';
+      initialLoader.style.transition = 'opacity 0.4s ease';
+      
+      setTimeout(() => {
+        if (initialLoader.parentNode) {
+          initialLoader.parentNode.removeChild(initialLoader);
+        }
+      }, 400);
+    }
+  }, 500);
 } else {
   console.error('Root element not found! Check your index.html')
 }
