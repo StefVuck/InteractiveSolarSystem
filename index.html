@@ -5,17 +5,149 @@
     <link rel="icon" type="image/svg+xml" href="/solar-system-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Interactive Solar System</title>
+    <!-- Directly include stylesheets instead of preloading -->
+    <link rel="stylesheet" href="/src/index.css" />
+    <link rel="stylesheet" href="/src/App.css" />
+    
+    <!-- Initial loading screen styling -->
+    <style>
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      .loader-content {
+        text-align: center;
+      }
+      .loader-spinner {
+        border: 5px solid #333;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+    
     <!-- Disable context preservation option which may help with WebGL crashes -->
     <script>
+      // Preload critical resources using Resource Hints API
+      function preloadCriticalAssets() {
+        // Create and append all modulepreload links in one batch
+        const criticalModules = [
+          '/src/main.jsx',
+          '/node_modules/three/build/three.module.js'
+          // Fixed: Remove non-existent paths that cause 404 errors
+        ];
+        
+        const fragment = document.createDocumentFragment();
+        
+        criticalModules.forEach(module => {
+          const link = document.createElement('link');
+          link.rel = 'modulepreload';
+          link.href = module;
+          link.crossOrigin = 'anonymous';
+          fragment.appendChild(link);
+        });
+        
+        document.head.appendChild(fragment);
+      }
+      
+      // High-priority preload immediately on script execution
+      preloadCriticalAssets();
+      
+      // Initialize WebGL context early to speed up WebGL initialization
+      function initializeWebGL() {
+        // Wait for DOM to be ready before creating canvas
+        if (document.readyState === 'loading') {
+          return null; // Will initialize later when DOM ready
+        }
+        
+        try {
+          // Create a hidden canvas to start WebGL initialization
+          const canvas = document.createElement('canvas');
+          canvas.style.position = 'absolute';
+          canvas.style.width = '1px';
+          canvas.style.height = '1px';
+          canvas.style.opacity = '0';
+          
+          // Make sure body exists before appending
+          if (document.body) {
+            document.body.appendChild(canvas);
+            
+            // Get WebGL context - just initializing will help subsequent WebGL calls
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+            if (gl) {
+              // Set basic params
+              gl.enable(gl.DEPTH_TEST);
+              gl.clearColor(0, 0, 0, 1);
+              gl.clear(gl.COLOR_BUFFER_BIT);
+            }
+            
+            return gl;
+          }
+        } catch (e) {
+          console.warn('WebGL pre-initialization failed, will retry later', e);
+        }
+        return null;
+      }
+      
+      // Try to initialize WebGL, but will do it properly when DOM is ready
+      let gl = null;
+      
+      // Safe initialization after DOM is ready
+      document.addEventListener('DOMContentLoaded', function() {
+        gl = initializeWebGL();
+      });
+      
       window.addEventListener('load', function() {
         // Set renderer parameters to minimize crashes
         if (window.THREE) {
           THREE.WebGLRenderer.disableProgramCache = true;
         }
+        
+        // Let React handle the loader removal now
+        // Most loader removal now happens in main.jsx
       });
     </script>
   </head>
   <body>
+    <!-- Initial loading indicator that shows before React mounts -->
+    <div id="initial-loader" class="initial-loader">
+      <div class="loader-content">
+        <div class="loader-spinner"></div>
+        <h2>Loading Solar System...</h2>
+        <p>Preparing celestial bodies</p>
+        <script>
+          // Force loader removal after a reasonable timeout
+          setTimeout(function() {
+            var loader = document.getElementById('initial-loader');
+            if (loader && loader.parentNode) {
+              loader.style.opacity = '0';
+              loader.style.transition = 'opacity 0.5s ease';
+              setTimeout(function() {
+                if (loader.parentNode) loader.parentNode.removeChild(loader);
+              }, 500);
+            }
+          }, 3000); // 3 second fallback
+        </script>
+      </div>
+    </div>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

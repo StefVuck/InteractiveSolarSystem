@@ -6,6 +6,7 @@ import * as THREE from 'three';
 
 // Import Components
 import DetailedPlanet from '../components/celestial/DetailedPlanet';
+import DetailedEarth from '../components/celestial/DetailedEarth';
 import JupiterRedSpot from '../components/celestial/JupiterRedSpot';
 import ISS from '../components/spacecraft/ISS';
 import Moon from '../components/celestial/Moon';
@@ -112,11 +113,17 @@ function PlanetPage({ planets }) {
               )}
               
               {/* Detailed planet */}
-              <DetailedPlanet 
-                color={planet.color} 
-                planetId={planet.id} 
-                onMoonClick={planet.id === 'earth' ? () => handleMoonClick('moon') : undefined} 
-              />
+              {planet.id === 'earth' ? (
+                <DetailedEarth 
+                  onMoonClick={() => handleMoonClick('moon')} 
+                />
+              ) : (
+                <DetailedPlanet 
+                  color={planet.color} 
+                  planetId={planet.id} 
+                  onMoonClick={handleMoonClick} 
+                />
+              )}
               
               {/* Add Jupiter's Great Red Spot if on Jupiter's page */}
               {planet.id === 'jupiter' && <JupiterRedSpot />}

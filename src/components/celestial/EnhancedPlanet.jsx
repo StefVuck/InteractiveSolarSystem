@@ -4,8 +4,8 @@ import * as THREE from 'three';
 import HorizontalText from '../common/HorizontalText';
 import { 
   createJupiterTexture, 
-  createEarthTexture, 
-  createCloudTexture 
+  createEnhancedEarthTexture, 
+  createEnhancedCloudTexture 
 } from '../../utils/textureGenerators';
 
 /**
@@ -45,13 +45,13 @@ function EnhancedPlanet({
   // Create Earth's land regions using procedural textures with polygon style and day/night cycle
   const earthTexture = useMemo(() => {
     if (!isEarth) return null;
-    return createEarthTexture();
+    return createEnhancedEarthTexture();
   }, [isEarth]);
   
   // Create cloud texture with minimal clouds using polygon shapes
   const cloudTexture = useMemo(() => {
     if (!isEarth) return null;
-    return createCloudTexture();
+    return createEnhancedCloudTexture();
   }, [isEarth]);
   
   // Track day/night cycle for Earth

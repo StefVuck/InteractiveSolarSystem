@@ -3,8 +3,8 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { 
   createJupiterBandsTexture, 
-  createEarthTexture,
-  createCloudTexture,
+  createEnhancedEarthTexture,
+  createEnhancedCloudTexture,
   createDetailedSaturnRingsTexture,
   createMoonTexture
 } from '../../utils/textureGenerators';
@@ -39,21 +39,11 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
     return null;
   }, [isSaturn]);
   
-  // Create Earth's land regions using procedural textures
-  const earthTexture = useMemo(() => {
-    if (isEarth) {
-      return createEarthTexture();
-    }
-    return null;
-  }, [isEarth]);
+  // Earth is now handled by DetailedEarth component
+  const earthTexture = null;
   
-  // Create cloud texture with minimal clouds using polygon shapes
-  const cloudTexture = useMemo(() => {
-    if (isEarth) {
-      return createCloudTexture();
-    }
-    return null;
-  }, [isEarth]);
+  // Cloud texture no longer needed here (DetailedEarth component has its own)
+  const cloudTexture = null;
   
   // Create simple texture for dwarf planets
   const createDwarfPlanetTexture = () => {
@@ -253,13 +243,18 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   // Get ring properties
   const getRingProps = () => {
     if (planetId === 'saturn') {
+      // Make sure we have the Saturn ring texture
+      if (!saturnRingsTexture) {
+        console.warn('Saturn rings texture is not loaded!');
+      }
+      
       return {
         innerRadius: 2.5,
         outerRadius: 3.8, // Reduced the size to avoid blocking Titan
         color: '#F4D59C',
         rotation: [Math.PI / 4, 0, 0],
         opacity: 0.9, // Slightly reduced opacity for better visibility
-        texture: saturnRingsTexture
+        texture: saturnRingsTexture // This will be used directly in the material
       };
     } else if (planetId === 'uranus') {
       return {
@@ -361,9 +356,9 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
           rotation={ringProps.rotation}
         >
           <ringGeometry args={[ringProps.innerRadius, ringProps.outerRadius, 256]} /> {/* Higher segment count */}
-          {isSaturn ? (
+          {isSaturn && saturnRingsTexture ? (
             <meshBasicMaterial 
-              map={ringProps.texture}
+              map={saturnRingsTexture}
               side={THREE.DoubleSide} 
               transparent={true} 
               opacity={ringProps.opacity}

@@ -21,8 +21,11 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Properly spaced orbital distances following astronomical scales
 - Asteroid belts (Main Belt between Mars and Jupiter, Kuiper Belt beyond Neptune)
 - Voyager 1 and Voyager 2 spacecraft with glowing effects and information panels
-- Orbiting astronomy facts that appear as glowing text boxes
+- Orbiting astronomy facts that appear as glowing text boxes (with visibility toggle)
 - Advanced lighting with sun glow and day/night planet sides
+- Toggle buttons for orbit line visualization and astronomy facts
+- Planet orbits shown with accurate relative orbital periods
+- Dwarf planet orbits shown with accurate inclinations (visible only when dwarf planet menu is open)
 - Swiss-style navigation with planetary icons and dropdown menus for moons
 - Each moon has a detailed page with interactive 3D model and scientific information
 - Easter eggs: 
@@ -63,6 +66,8 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 ## How to Use
 
 - On the home page, you'll see the entire solar system with planets orbiting the sun
+- Use the toggle buttons in the top right to show/hide orbit lines and astronomy facts
+- The orbit lines show the path each planet follows, with accurate relative orbital speeds
 - Click on any planet to navigate to its detailed page
 - Click on Voyager spacecraft to see information about their missions
 - On Earth's page, you can see the ISS orbiting and visit the detailed Moon page
@@ -74,9 +79,10 @@ An interactive 3D solar system visualization built with React, Three.js and WebG
 - Click once on planets with moons (Earth, Jupiter, Saturn, Mars, and Pluto) to open a dropdown menu of their moons
 - Double-click on these planets to go directly to the planet page
 - On individual planet pages, you can rotate and zoom in/out to explore the 3D models
-- Look for interesting facts orbiting in the system - they periodically change!
+- Look for interesting facts orbiting in the system - they periodically change! (Toggle them off if you want to focus on the planets)
 - Find the hidden dwarf planets in the far reaches of the solar system
 - For a hidden easter egg: look for a tiny dot in the top-right corner of the navigation bar and double-click it
+- Once the dwarf planet menu is open, you'll see the inclined orbits of the dwarf planets if orbit lines are enabled
 
 ### Easter Eggs
 
@@ -136,6 +142,10 @@ Add new spacecraft or satellites by following the pattern in the `Spacecraft` co
 ### Performance Tuning
 
 The application has been optimized for stable WebGL performance by:
+- Implementing fast initial loading with direct component rendering
+- Using effective texture caching and reuse through shared canvas
+- Disabling unnecessary Three.js features like shadows during load
+- Setting appropriate device pixel ratios for balance of quality and speed
 - Limiting asteroid and particle counts
 - Optimizing lighting and shadow calculations
 - Reducing geometry complexity where appropriate
@@ -144,6 +154,8 @@ The application has been optimized for stable WebGL performance by:
 - Separating complex rendering into dedicated components
 - Adding subtle glow effects that enhance visibility without impacting performance
 - Implementing adaptive detail levels based on viewing distance and device capabilities
+- Using continuous rendering with proper optimization for WebGL context
+- Fallback loader removal to ensure smooth user experience
 
 ## License
 GPLv3
