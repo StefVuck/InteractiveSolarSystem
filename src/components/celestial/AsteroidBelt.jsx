@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Html } from '@react-three/drei';
 
 /**
@@ -6,6 +6,23 @@ import { Html } from '@react-three/drei';
  */
 const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" }) => {
   const [asteroids, setAsteroids] = useState([]);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  
+  // Listen for help modal state changes
+  useEffect(() => {
+    const handleHelpModalChange = (e) => {
+      setIsHelpModalOpen(e.detail.isOpen);
+    };
+    
+    document.addEventListener('helpModalStateChange', handleHelpModalChange);
+    
+    // Initial check
+    setIsHelpModalOpen(window.isHelpModalOpen || false);
+    
+    return () => {
+      document.removeEventListener('helpModalStateChange', handleHelpModalChange);
+    };
+  }, []);
   
   // Generate random asteroids in a belt - limit count to avoid crashes
   useEffect(() => {
@@ -43,17 +60,19 @@ const AsteroidBelt = ({ innerRadius, outerRadius, count, name, color = "#AAA" })
 
   return (
     <>
-      {/* Belt name */}
-      <Html position={[0, 2, (innerRadius + outerRadius) / 2]} center>
-        <div style={{
-          color: 'white',
-          padding: '4px',
-          fontSize: '14px',
-          opacity: 0.7
-        }}>
-          {name}
-        </div>
-      </Html>
+      {/* Belt name - only show when help modal is closed */}
+      {!isHelpModalOpen && (
+        <Html position={[0, 2, (innerRadius + outerRadius) / 2]} center>
+          <div style={{
+            color: 'white',
+            padding: '4px',
+            fontSize: '14px',
+            opacity: 0.7
+          }}>
+            {name}
+          </div>
+        </Html>
+      )}
     
       {/* Individual asteroids - limit for performance */}
       {asteroids.map(asteroid => {

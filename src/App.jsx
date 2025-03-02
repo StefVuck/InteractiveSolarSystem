@@ -1,4 +1,5 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import planets, { dwarfPlanets } from './data/planets';
 
@@ -24,11 +25,28 @@ function App() {
 function AppContent() {
   const navigate = useNavigate();
   
-  // State for the dwarf planet menu and moons dropdown
+  // State for the dwarf planet menu, moons dropdown, and help modal
   const [dwarfMenuOpen, setDwarfMenuOpen] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
   const [moonsDropdownFor, setMoonsDropdownFor] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  
+  // Create a global state for the help modal that other components can check
+  useEffect(() => {
+    // Make the modal state available globally
+    window.isHelpModalOpen = showHelpModal;
+    
+    // Dispatch a custom event so other components can react
+    const event = new CustomEvent('helpModalStateChange', { 
+      detail: { isOpen: showHelpModal } 
+    });
+    document.dispatchEvent(event);
+    
+    return () => {
+      window.isHelpModalOpen = false;
+    };
+  }, [showHelpModal]);
   
   // Data for which planets have moons and what those moons are
   const planetMoons = {
@@ -97,6 +115,18 @@ function AppContent() {
       } else {
         // Single click - toggle dropdown
         setMoonsDropdownFor(moonsDropdownFor === planetId ? null : planetId);
+        
+        // Position the dropdown correctly under the planet
+        setTimeout(() => {
+          const planetElement = e.currentTarget;
+          const dropdown = document.querySelector(`.moons-dropdown[data-planet-id="${planetId}"]`);
+          
+          if (planetElement && dropdown) {
+            const rect = planetElement.getBoundingClientRect();
+            dropdown.style.left = `${rect.left}px`;
+          }
+        }, 0);
+        
         // Close dwarf planets menu if open
         if (dwarfMenuOpen) setDwarfMenuOpen(false);
       }
@@ -109,54 +139,72 @@ function AppContent() {
   return (
     <div className="app">
       <nav>
-        <ul>
-          <li>
-            <Link to="/">
+        <div className="nav-container">
+          {/* Solar System button - highest priority */}
+          <div className="nav-left">
+            <Link to="/" className="solar-system-link">
               <span className="solar-system-icon"></span>
               Solar System
             </Link>
-          </li>
-          {planets.map(planet => (
-            <li key={planet.id} className={planetMoons[planet.id] ? 'has-moons' : ''}>
-              <a 
-                href={`/planet/${planet.id}`}
-                onClick={(e) => handlePlanetClick(e, planet.id)}
-                className={moonsDropdownFor === planet.id ? 'active' : ''}
-              >
-                <span 
-                  className="planet-icon" 
-                  style={{ 
-                    backgroundColor: planet.color,
-                    boxShadow: planet.id === 'saturn' ? `0 0 8px ${planet.color}` : 'none'
-                  }}
-                ></span>
-                {planet.name}
-                {planetMoons[planet.id] && (
-                  <span className="dropdown-indicator">▾</span>
-                )}
-              </a>
-              
-            </li>
-          ))}
-        </ul>
-        
-        {/* Other Projects button */}
-        <a 
-          href="https://github.com/StefVuck" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="other-projects-button"
-        >
-          Other Projects
-        </a>
-        
-        {/* Hidden dwarf planet button (easter egg) */}
-        <button 
-          className={`dwarf-button ${dwarfMenuOpen ? 'active' : ''}`}
-          onClick={handleDwarfButtonClick}
-          aria-label="Dwarf Planets"
-          style={{ backgroundColor: dwarfMenuOpen ? '#FFCC00' : '#444' }}
-        />
+          </div>
+          
+          {/* Scrollable planets list */}
+          <div className="planets-scroll-container">
+            <ul>
+              {planets.map(planet => (
+                <li key={planet.id} className={planetMoons[planet.id] ? 'has-moons' : ''}>
+                  <a 
+                    href={`/planet/${planet.id}`}
+                    onClick={(e) => handlePlanetClick(e, planet.id)}
+                    className={moonsDropdownFor === planet.id ? 'active' : ''}
+                  >
+                    <span 
+                      className="planet-icon" 
+                      style={{ 
+                        backgroundColor: planet.color,
+                        boxShadow: planet.id === 'saturn' ? `0 0 8px ${planet.color}` : 'none'
+                      }}
+                    ></span>
+                    {planet.name}
+                    {planetMoons[planet.id] && (
+                      <span className="dropdown-indicator">▾</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* Right nav buttons - next priority */}
+          <div className="nav-right">
+            {/* Help button (question mark icon) */}
+            <button 
+              className="help-button"
+              onClick={() => setShowHelpModal(true)}
+              aria-label="Help"
+            >
+              ?
+            </button>
+            
+            {/* Other Projects button */}
+            <a 
+              href="https://github.com/StefVuck" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="other-projects-button"
+            >
+              Other Projects
+            </a>
+            
+            {/* Dwarf planet button */}
+            <button 
+              className={`dwarf-button ${dwarfMenuOpen ? 'active' : ''}`}
+              onClick={handleDwarfButtonClick}
+              aria-label="Dwarf Planets"
+              style={{ backgroundColor: dwarfMenuOpen ? '#FFCC00' : '#444' }}
+            />
+          </div>
+        </div>
         
         {/* Dropdown menu for dwarf planets */}
         <div className={`dwarf-menu ${dwarfMenuOpen ? 'open' : ''}`}>
@@ -260,8 +308,86 @@ function AppContent() {
           />
         </Routes>
       </main>
+      
+      {/* This renderer will create an absolutely positioned overlay over everything */}
+      {showHelpModal && (
+        <div 
+          id="help-modal-wrapper" 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(5, 10, 36, 0.85)',
+            backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
+            zIndex: 10000000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            animation: 'fadeIn 0.3s ease'
+          }}
+          onClick={() => setShowHelpModal(false)}
+        >
+          <div 
+            className="help-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'rgba(16, 25, 55, 0.95)',
+              borderRadius: '8px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+              width: '90%',
+              maxWidth: '700px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              border: '1px solid rgba(100, 100, 150, 0.2)',
+              animation: 'scaleIn 0.3s ease',
+              position: 'relative',
+              zIndex: 10000001
+            }}
+          >
+            <div className="help-header">
+              <h2>Interactive Solar System</h2>
+              <button className="close-button" onClick={() => setShowHelpModal(false)}>×</button>
+            </div>
+            
+            <div className="help-content">
+              <div className="help-version">
+                <p>Version: 1.0.0</p>
+                <p>Released: March 2, 2025</p>
+              </div>
+              
+              <h3>About</h3>
+              <p>
+                An interactive 3D visualization of our solar system, allowing you to explore 
+                planets, moons, and other celestial bodies with accurate scale and orbital mechanics.
+              </p>
+              
+              <h3>How to Use</h3>
+              <ul>
+                <li>Use the top navigation to select planets and moons</li>
+                <li>Click and drag to rotate the view</li>
+                <li>Scroll to zoom in and out</li>
+                <li>Double-click on planets with moons to view directly</li>
+                <li>Discover the secret dwarf planets menu (hint: look for a small dot)</li>
+              </ul>
+              
+              <h3>Features</h3>
+              <ul>
+                <li>Accurate 3D models of all planets and major moons</li>
+                <li>Realistic textures and surface features</li>
+                <li>Dynamic lighting and shadow effects</li>
+                <li>Educational facts about each celestial body</li>
+                <li>Orbit visualization with accurate orbital mechanics</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+// Using default export for compatibility
 export default App;

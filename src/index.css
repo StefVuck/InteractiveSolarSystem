@@ -8,6 +8,10 @@
   background-color: #050A24;
 
   font-synthesis: none;
+  
+  /* Global settings for Three.js overlays and HTML elements */
+  --global-three-html-zindex: 10; /* Default z-index for Three.js Html overlays */
+  --modal-zindex: 100000; /* Extra high z-index for modals */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

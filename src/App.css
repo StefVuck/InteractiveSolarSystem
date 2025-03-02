@@ -35,6 +35,56 @@ nav {
   padding: 0;
   z-index: 10;
   border-bottom: 1px solid var(--border-color);
+  width: 100%;
+}
+
+/* New responsive container for navbar */
+.nav-container {
+  display: flex;
+  width: 100%;
+  position: relative;
+  height: 60px;
+}
+
+/* Left side with Solar System button - highest priority */
+.nav-left {
+  flex: 0 0 auto;
+  z-index: 30;
+  border-right: 1px solid var(--border-color);
+}
+
+.solar-system-link {
+  display: flex;
+  align-items: center;
+  color: var(--text-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  height: 60px;
+  padding: 0 20px;
+  white-space: nowrap;
+  background-color: var(--menu-bg);
+  position: relative;
+}
+
+.solar-system-link:hover {
+  color: var(--accent-color);
+}
+
+/* Center section with scrollable planets */
+.planets-scroll-container {
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  position: relative;
+  min-width: 0; /* Important for flexbox overflow behavior */
+}
+
+.planets-scroll-container::-webkit-scrollbar {
+  display: none;
 }
 
 nav ul {
@@ -42,13 +92,7 @@ nav ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
-nav ul::-webkit-scrollbar {
-  display: none;
+  min-width: max-content; /* Ensures all items are visible for scrolling */
 }
 
 nav li {
@@ -56,10 +100,6 @@ nav li {
   align-items: center;
   border-right: 1px solid var(--border-color);
   transition: background-color 0.2s;
-}
-
-nav li:first-child {
-  border-left: 1px solid var(--border-color);
 }
 
 nav li:hover {
@@ -83,6 +123,197 @@ nav a {
 
 nav a:hover {
   color: var(--accent-color);
+}
+
+/* Right section with buttons - second priority */
+.nav-right {
+  display: flex;
+  flex: 0 0 auto;
+  z-index: 30;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--menu-bg);
+}
+
+/* Help button (question mark icon) */
+.help-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  width: 60px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  color: #4ADE80;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 26px;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+  border-radius: 0;
+}
+
+.help-button:hover {
+  background-color: var(--menu-hover);
+  color: #5cf094;
+  transform: scale(1.1);
+}
+
+/* Help Modal Styling */
+.help-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(5, 10, 36, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000; /* Extremely high z-index */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+  /* This ensures the modal is above the three.js canvas and all HTML overlays */
+  pointer-events: all !important;
+  isolation: isolate; /* Create a new stacking context */
+}
+
+.help-modal {
+  background-color: var(--menu-bg);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  animation: scaleIn 0.3s ease;
+  position: relative;
+  z-index: 100001; /* Even higher than the overlay */
+}
+
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.help-header h2 {
+  color: var(--accent-color);
+  margin: 0;
+  font-size: 24px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 28px;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.close-button:hover {
+  color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+.help-content {
+  padding: 25px;
+}
+
+.help-version {
+  background-color: rgba(77, 123, 255, 0.1);
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.help-version p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--accent-color);
+}
+
+.help-content h3 {
+  color: var(--accent-color);
+  margin: 20px 0 10px;
+  font-size: 18px;
+}
+
+.help-content p {
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.help-content ul {
+  padding-left: 25px;
+  margin-bottom: 20px;
+}
+
+.help-content li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Other Projects button */
+.other-projects-button {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap;
+  border-right: 1px solid var(--border-color);
+}
+
+.other-projects-button:hover {
+  background-color: var(--menu-hover);
+  color: #fff;
+}
+
+/* Dwarf planet menu (hidden easter egg) */
+.dwarf-button {
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  margin: 26px 14px;
+  opacity: 0.1;
+  transition: opacity 0.3s;
+  z-index: 100;
 }
 
 /* Planet icons in nav */
@@ -131,47 +362,6 @@ nav a:hover .planet-icon {
   transform: translate(-50%, -50%);
 }
 
-/* Other Projects button */
-.other-projects-button {
-  position: absolute;
-  right: 30px;
-  top: 0;
-  display: flex;
-  align-items: center;
-  height: 60px;
-  padding: 0 20px;
-  color: var(--accent-color);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: background-color 0.2s, color 0.2s;
-  white-space: nowrap;
-  border-left: 1px solid var(--border-color);
-}
-
-.other-projects-button:hover {
-  background-color: var(--menu-hover);
-  color: #fff;
-}
-
-/* Dwarf planet menu (hidden easter egg) */
-.dwarf-button {
-  width: 8px;
-  height: 8px;
-  background-color: transparent;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  position: absolute;
-  right: 10px;
-  top: 26px;
-  opacity: 0.1;
-  transition: opacity 0.3s;
-  z-index: 100;
-}
-
 .dwarf-button:hover {
   opacity: 0.3;
 }
@@ -200,6 +390,108 @@ nav a:hover .planet-icon {
   transform: scaleY(1);
   opacity: 1;
   pointer-events: all;
+}
+
+/* Media queries for responsive navigation */
+@media (max-width: 850px) {
+  .planets-scroll-container a {
+    padding: 0 15px;
+    font-size: 12px;
+  }
+  
+  .planet-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  .other-projects-button {
+    padding: 0 15px;
+    font-size: 12px;
+  }
+  
+  .help-button {
+    width: 50px;
+    font-size: 22px;
+  }
+  
+  .solar-system-link {
+    padding: 0 15px;
+    font-size: 12px;
+  }
+
+  .planets-scroll-container a {
+    padding: 0 10px;
+    font-size: 11px;
+  }
+  
+  .planet-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 5px;
+  }
+  
+  .help-modal {
+    width: 95%;
+  }
+}
+
+/* Very small screens - prioritize the essential buttons */
+@media (max-width: 480px) {
+  .other-projects-button {
+    padding: 0 10px;
+    font-size: 11px;
+  }
+  
+  .help-button {
+    width: 40px;
+    font-size: 20px;
+  }
+  
+  .solar-system-link {
+    padding: 0 10px;
+    font-size: 11px;
+  }
+  
+  .planets-scroll-container {
+    overflow-x: auto;
+  }
+  
+  .planets-scroll-container a {
+    padding: 0 8px;
+    font-size: 10px;
+  }
+  
+  .planet-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+  }
+  
+  /* Ensure the navigation priorities are respected */
+  .nav-left {
+    z-index: 31; /* Higher than other elements */
+  }
+  
+  .nav-right {
+    z-index: 30; /* Higher than planets but lower than home */
+  }
+  
+  .help-modal {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 0;
+  }
+  
+  .help-version {
+    flex-direction: column;
+  }
+  
+  .help-version p:first-child {
+    margin-bottom: 5px;
+  }
 }
 
 .dwarf-menu ul {
@@ -273,7 +565,6 @@ nav a.active .dropdown-indicator {
 .moons-dropdown {
   position: absolute;
   top: 60px;
-  left: 100px; /* Default position, will be adjusted with JavaScript */
   background-color: rgba(16, 25, 55, 0.98);
   border-radius: 0 0 4px 4px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
@@ -295,23 +586,6 @@ nav a.active .dropdown-indicator {
   pointer-events: all;
   visibility: visible;
   display: block;
-}
-
-/* Position each planet's dropdown, this solution sucks, but at least it works */
-.moons-dropdown[data-planet-id="earth"] {
-  left: 430px;
-}
-
-.moons-dropdown[data-planet-id="jupiter"] {
-  left: 682px;
-}
-
-.moons-dropdown[data-planet-id="saturn"] {
-  left: 824 px;
-}
-
-.moons-dropdown[data-planet-id="mars"] {
-  left: 560px;
 }
 
 .moons-dropdown ul {

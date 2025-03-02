@@ -4,7 +4,24 @@ import * as THREE from 'three';
 
 const OrbitingFacts = ({ facts, maxActive = 5, scene = 'solar-system' }) => {
   const [activeFacts, setActiveFacts] = useState([]);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const rotationRef = useRef(0);
+  
+  // Listen for help modal state changes
+  useEffect(() => {
+    const handleHelpModalChange = (e) => {
+      setIsHelpModalOpen(e.detail.isOpen);
+    };
+    
+    document.addEventListener('helpModalStateChange', handleHelpModalChange);
+    
+    // Initial check
+    setIsHelpModalOpen(window.isHelpModalOpen || false);
+    
+    return () => {
+      document.removeEventListener('helpModalStateChange', handleHelpModalChange);
+    };
+  }, []);
   
   // Generate a new fact orbit
   const generateNewOrbit = (factIndex) => {
@@ -165,6 +182,11 @@ const OrbitingFacts = ({ facts, maxActive = 5, scene = 'solar-system' }) => {
     
     return position;
   };
+  
+  // Don't render facts when help modal is open
+  if (isHelpModalOpen) {
+    return null;
+  }
   
   return (
     <group>
