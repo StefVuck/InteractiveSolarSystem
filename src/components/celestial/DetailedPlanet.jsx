@@ -12,7 +12,7 @@ import {
 /**
  * Enhanced planet detail component for individual planet pages
  */
-const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
+const DetailedPlanet = ({ color, planetId, onMoonClick, simplifiedRendering = false }) => {
   const meshRef = useRef();
   const ringsRef = useRef();
   const cloudsRef = useRef();
@@ -45,76 +45,111 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
   // Cloud texture no longer needed here (DetailedEarth component has its own)
   const cloudTexture = null;
   
-  // Create simple texture for dwarf planets
+  // Create optimized texture for dwarf planets
   const createDwarfPlanetTexture = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
+    // Use shared offscreen canvas if available, or create a new one
+    const canvas = window.sharedOffscreenCanvas || document.createElement('canvas');
+    // For better performance, use very small texture size
+    const width = 256;  // Keep small for performance
+    const height = 128; // Keep small for performance
+    
+    if (!window.sharedOffscreenCanvas) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    
+    const ctx = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
+    
+    // Clear the canvas first in case it was used previously
+    ctx.clearRect(0, 0, width, height);
     
     // Base color
     ctx.fillStyle = color;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, width, height);
     
-    // Add some basic features based on which dwarf planet
+    // Add simplified features based on dwarf planet type
     if (planetId === 'pluto') {
-      // Create Pluto's heart-shaped region (Tombaugh Regio)
+      // Create Pluto's heart-shaped region (Tombaugh Regio) - simplified
       ctx.fillStyle = '#f0f0f0';
       ctx.beginPath();
-      // Draw simplified heart shape
-      ctx.arc(canvas.width/2-100, canvas.height/2, 100, 0, Math.PI, true);
-      ctx.arc(canvas.width/2+100, canvas.height/2, 100, 0, Math.PI, true);
+      // Use simplified heart with fewer curves 
+      ctx.arc(width/2-30, height/2, 30, 0, Math.PI, true);
+      ctx.arc(width/2+30, height/2, 30, 0, Math.PI, true);
       ctx.bezierCurveTo(
-        canvas.width/2+200, canvas.height/2+100,
-        canvas.width/2, canvas.height/2+200,
-        canvas.width/2-200, canvas.height/2+100
+        width/2+60, height/2+30,
+        width/2, height/2+60,
+        width/2-60, height/2+30
       );
       ctx.fill();
-    } else if (planetId === 'ceres') {
-      // Add some crater-like features
-      for (let i = 0; i < 30; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const radius = Math.random() * 30 + 10;
-        
-        ctx.fillStyle = `rgba(100, 100, 100, 0.3)`;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (planetId === 'haumea') {
-      // For Haumea's elongated shape, we'll simulate it with shading
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-      gradient.addColorStop(0, 'rgba(0,0,0,0.4)');
-      gradient.addColorStop(0.3, 'rgba(255,255,255,0.1)');
-      gradient.addColorStop(0.7, 'rgba(255,255,255,0.1)');
-      gradient.addColorStop(1, 'rgba(0,0,0,0.4)');
+    } 
+    else if (planetId === 'ceres') {
+      // Just add 1 large crater and 2 small ones - pre-positioned
+      // Large central crater
+      ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+      ctx.beginPath();
+      ctx.arc(width * 0.5, height * 0.5, 35, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Two smaller craters
+      ctx.fillStyle = 'rgba(80, 80, 80, 0.2)';
+      ctx.beginPath();
+      ctx.arc(width * 0.3, height * 0.4, 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.arc(width * 0.7, height * 0.6, 25, 0, Math.PI * 2);
+      ctx.fill();
+    } 
+    else if (planetId === 'haumea') {
+      // For Haumea's elongated shape, use a simple horizontal gradient
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, 'rgba(220, 220, 220, 1)');
+      gradient.addColorStop(0.5, 'rgba(250, 250, 250, 1)');
+      gradient.addColorStop(1, 'rgba(220, 220, 220, 1)');
       
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else if (planetId === 'makemake') {
-      // Reddish surface features
-      for (let i = 0; i < 40; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const radius = Math.random() * 40 + 20;
-        
-        ctx.fillStyle = `rgba(150, 80, 50, 0.2)`;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.fillRect(0, 0, width, height);
+    } 
+    else if (planetId === 'makemake') {
+      // Add only 2 reddish areas - pre-positioned
+      ctx.fillStyle = 'rgba(150, 80, 50, 0.2)';
+      
+      // Larger feature
+      ctx.beginPath();
+      ctx.arc(width * 0.4, height * 0.5, 40, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Smaller feature
+      ctx.beginPath();
+      ctx.arc(width * 0.7, height * 0.4, 30, 0, Math.PI * 2);
+      ctx.fill();
     }
     
-    // Create a texture from the canvas
+    // Create a texture from the canvas with optimized settings
     const texture = new THREE.CanvasTexture(canvas);
+    texture.generateMipmaps = false; // Disable mipmaps for better performance
+    texture.minFilter = THREE.LinearFilter; // Use simple filtering
+    texture.magFilter = THREE.LinearFilter;
+    
     return texture;
   };
   
-  // Create dwarf planet texture if needed
+  // Create dwarf planet texture if needed - with improved caching
   const dwarfPlanetTexture = useMemo(() => {
     if (isDwarfPlanet) {
-      return createDwarfPlanetTexture();
+      // Check for cached texture first
+      if (window.cachedTextures && window.cachedTextures[`dwarf-${planetId}`]) {
+        return window.cachedTextures[`dwarf-${planetId}`];
+      }
+      
+      // Create the texture
+      const texture = createDwarfPlanetTexture();
+      
+      // Cache the texture for future use
+      if (!window.cachedTextures) window.cachedTextures = {};
+      window.cachedTextures[`dwarf-${planetId}`] = texture;
+      
+      return texture;
     }
     return null;
   }, [isDwarfPlanet, planetId, color]);
@@ -322,17 +357,28 @@ const DetailedPlanet = ({ color, planetId, onMoonClick }) => {
           />
         </mesh>
       ) : isDwarfPlanet ? (
-        // Dwarf planets with simplified texture
+        // Dwarf planets with simplified texture but still visually interesting
         <mesh ref={meshRef}>
-          <sphereGeometry args={[getSize(), 32, 32]} />
-          <meshStandardMaterial 
-            map={dwarfPlanetTexture}
-            color={color}
-            emissive={color} 
-            emissiveIntensity={0.2}
-            roughness={0.7}
-            metalness={0.3}
-          />
+          <sphereGeometry args={[getSize(), planetId === 'pluto' ? 32 : 24, planetId === 'pluto' ? 32 : 24]} />
+          {simplifiedRendering ? (
+            // For potentially problematic dwarf planets, use a more efficient material
+            <meshLambertMaterial 
+              map={dwarfPlanetTexture}
+              color={color}
+              emissive={color}
+              emissiveIntensity={0.1}
+            />
+          ) : (
+            // Full rendering for Pluto
+            <meshStandardMaterial 
+              map={dwarfPlanetTexture}
+              color={color}
+              emissive={color} 
+              emissiveIntensity={0.2}
+              roughness={0.7}
+              metalness={0.3}
+            />
+          )}
         </mesh>
       ) : (
         // Other planets with procedural geometry

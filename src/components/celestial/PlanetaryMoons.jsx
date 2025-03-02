@@ -154,7 +154,16 @@ const PlanetaryMoons = ({
   const [hoveredMoon, setHoveredMoon] = useState(null);
   const moonRefs = useRef({});
   
-  // Initialize moon angles
+  // Early return if no moons are defined for this planet or for "problem" dwarf planets
+  // We have a specific whitelist of planets we know are safe
+  const safeWithMoons = ['earth', 'jupiter', 'saturn', 'mars', 'pluto'];
+  
+  if (!safeWithMoons.includes(planetId) || moons.length === 0) {
+    console.log(`Skipping moons for planet ${planetId} - either not in whitelist or no moons defined`);
+    return null;
+  }
+  
+  // Initialize moon angles - this will only run if we have moons
   useEffect(() => {
     const initialAngles = {};
     moons.forEach(moon => {
@@ -164,19 +173,32 @@ const PlanetaryMoons = ({
     setMoonAngles(initialAngles);
   }, [moons]);
   
-  // Create textures for each moon (once)
+  // Create textures for each moon (once) with caching
   const moonTextures = useMemo(() => {
     const textures = {};
     moons.forEach(moon => {
       if (moon.textureGenerator) {
-        textures[moon.id] = moon.textureGenerator();
+        // Check for cached texture first
+        const cacheKey = `moon-${moon.id}`;
+        if (window.cachedTextures && window.cachedTextures[cacheKey]) {
+          textures[moon.id] = window.cachedTextures[cacheKey];
+        } else {
+          // Generate and cache the texture
+          textures[moon.id] = moon.textureGenerator();
+          
+          // Store in global cache
+          if (!window.cachedTextures) window.cachedTextures = {};
+          window.cachedTextures[cacheKey] = textures[moon.id];
+        }
       }
     });
     return textures;
-  }, [moons]);
+  }, [moons, planetId]);
   
-  // Update moon positions
+  // Update moon positions - ensure we have moon angles set first
   useEffect(() => {
+    if (Object.keys(moonAngles).length === 0) return; // Skip if moonAngles isn't initialized yet
+    
     const intervalIds = moons.map(moon => {
       return setInterval(() => {
         setMoonAngles(prev => ({
@@ -187,10 +209,13 @@ const PlanetaryMoons = ({
     });
     
     return () => intervalIds.forEach(id => clearInterval(id));
-  }, [moons]);
+  }, [moons, moonAngles]);
   
-  // Update moon rotations
+  // Update moon rotations - with additional safety checks
   useFrame(() => {
+    // Only run this if moons is not empty and moonRefs is set up
+    if (moons.length === 0 || Object.keys(moonRefs.current).length === 0) return;
+    
     moons.forEach(moon => {
       if (moonRefs.current[moon.id]?.current) {
         moonRefs.current[moon.id].current.rotation.y += 0.003;

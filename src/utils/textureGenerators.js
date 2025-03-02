@@ -3059,102 +3059,94 @@ export const createDeimosTexture = () => {
 /**
  * Creates a texture for Charon (Pluto's largest moon)
  * Characterized by a dark reddish north polar region (Mordor Macula)
+ * Optimized for performance
  */
 export const createCharonTexture = () => {
+  // Check for cached texture first
+  if (window.cachedTextures && window.cachedTextures['charon']) {
+    return window.cachedTextures['charon'];
+  }
+  
+  // Use smaller canvas for better performance
   const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
+  canvas.width = 512; // Reduced from 1024
+  canvas.height = 256; // Reduced from 512
+  const ctx = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
   
   // Base color - grayish with slight blue tint
   ctx.fillStyle = '#B8BCC0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  // Create Mordor Macula (dark reddish north polar region)
+  // Create Mordor Macula (dark reddish north polar region) - simplified
   const mordorX = canvas.width / 2;
   const mordorY = canvas.height * 0.2; // North pole region
   const mordorRadius = canvas.width * 0.3;
   
-  // Create gradient for smooth edges
-  const mordorGradient = ctx.createRadialGradient(
-    mordorX, mordorY, 0,
-    mordorX, mordorY, mordorRadius
-  );
-  mordorGradient.addColorStop(0, 'rgba(100, 50, 50, 0.9)');
-  mordorGradient.addColorStop(0.7, 'rgba(120, 60, 60, 0.7)');
-  mordorGradient.addColorStop(1, 'rgba(140, 80, 80, 0)');
-  
-  ctx.fillStyle = mordorGradient;
+  // Use a simpler approach without complex gradients
+  ctx.fillStyle = '#9A4A4A'; // Flat color instead of gradient
   ctx.beginPath();
   ctx.arc(mordorX, mordorY, mordorRadius, 0, Math.PI * 2);
   ctx.fill();
   
-  // Create large impact craters
-  const craterCount = 12;
-  for (let i = 0; i < craterCount; i++) {
-    // Avoid putting craters in Mordor Macula (north polar region)
-    let x, y, distToMordor;
-    do {
-      x = Math.random() * canvas.width;
-      y = Math.random() * canvas.height;
-      distToMordor = Math.sqrt(Math.pow(x - mordorX, 2) + Math.pow(y - mordorY, 2));
-    } while (distToMordor < mordorRadius * 0.7);
-    
-    const size = Math.random() * 40 + 20;
-    
-    // Crater rim - slightly brighter than base
+  // Add a darker center to the Mordor Macula
+  ctx.fillStyle = '#7A3A3A';
+  ctx.beginPath();
+  ctx.arc(mordorX, mordorY, mordorRadius * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Create craters with fixed positions instead of random + collision detection
+  const craters = [
+    { x: canvas.width * 0.3, y: canvas.height * 0.6, size: 30 },
+    { x: canvas.width * 0.7, y: canvas.height * 0.7, size: 40 },
+    { x: canvas.width * 0.8, y: canvas.height * 0.3, size: 25 },
+    { x: canvas.width * 0.2, y: canvas.height * 0.5, size: 35 }
+  ];
+  
+  craters.forEach(crater => {
+    // Crater rim
     ctx.fillStyle = '#CDD1D6';
     ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
     ctx.fill();
     
-    // Crater depression - slightly darker than base
-    ctx.fillStyle = '#A0A4A8';
-    ctx.beginPath();
-    ctx.arc(x, y, size * 0.85, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Crater center - darker
+    // Simplified crater interior - single layer instead of multiple
     ctx.fillStyle = '#909498';
     ctx.beginPath();
-    ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+    ctx.arc(crater.x, crater.y, crater.size * 0.7, 0, Math.PI * 2);
     ctx.fill();
-  }
+  });
   
-  // Add some smaller craters
-  const smallCraterCount = 80;
-  for (let i = 0; i < smallCraterCount; i++) {
-    const x = Math.random() * canvas.width;
-    const y = Math.random() * canvas.height;
-    const size = Math.random() * 15 + 5;
-    
-    // Small crater - simple design
-    const brightness = Math.random() < 0.5 ? '#A0A4A8' : '#CDD1D6';
-    ctx.fillStyle = brightness;
+  // Add minimal smaller craters - fixed instead of random
+  const smallCraters = [
+    { x: canvas.width * 0.4, y: canvas.height * 0.4, size: 10 },
+    { x: canvas.width * 0.6, y: canvas.height * 0.5, size: 8 },
+    { x: canvas.width * 0.35, y: canvas.height * 0.75, size: 12 },
+    { x: canvas.width * 0.75, y: canvas.height * 0.55, size: 7 },
+    { x: canvas.width * 0.15, y: canvas.height * 0.35, size: 9 }
+  ];
+  
+  ctx.fillStyle = '#A0A4A8';
+  smallCraters.forEach(crater => {
     ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
     ctx.fill();
-  }
+  });
   
-  // Add terrain variation - subtle lighter and darker patches
-  const patchCount = 15;
-  for (let i = 0; i < patchCount; i++) {
-    const x = Math.random() * canvas.width;
-    const y = Math.random() * canvas.height;
-    const size = Math.random() * 100 + 50;
-    
-    // Random light or dark patch with low opacity
-    const brightness = Math.random() < 0.5 ? 
-      'rgba(200, 205, 210, 0.15)' : 
-      'rgba(150, 155, 160, 0.15)';
-    
-    ctx.fillStyle = brightness;
-    ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // Just add a single light patch instead of many random ones
+  ctx.fillStyle = 'rgba(200, 205, 210, 0.15)';
+  ctx.beginPath();
+  ctx.ellipse(canvas.width * 0.6, canvas.height * 0.4, canvas.width * 0.2, canvas.height * 0.15, 0, 0, Math.PI * 2);
+  ctx.fill();
   
-  // Create texture from canvas
+  // Create texture from canvas with optimized settings
   const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = false; // Disable mipmaps for better performance
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  
+  // Cache texture for reuse
+  if (!window.cachedTextures) window.cachedTextures = {};
+  window.cachedTextures['charon'] = texture;
+  
   return texture;
 };

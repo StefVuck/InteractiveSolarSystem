@@ -48,7 +48,13 @@ function PlanetPage({ planets }) {
   
   // Determines if current planet should have moons system
   const hasMoons = (planetId) => {
-    return ['earth', 'jupiter', 'saturn', 'mars', 'pluto'].includes(planetId);
+    // Check if this is a planet with known moons or a dwarf planet with hasMoons flag
+    const isPlanetWithMoons = ['earth', 'jupiter', 'saturn', 'mars'].includes(planetId);
+    
+    // For dwarf planets, check if they have the hasMoons flag set to true
+    const isDwarfPlanetWithMoons = planet.hasMoons === true;
+    
+    return isPlanetWithMoons || isDwarfPlanetWithMoons;
   };
   
   return (
@@ -86,7 +92,16 @@ function PlanetPage({ planets }) {
                 antialias: false,
                 depth: true,
                 stencil: false,
-                alpha: false
+                alpha: false,
+                // Add WebGL context loss handling
+                onContextLost: (event) => {
+                  console.warn('WebGL context lost, preventing default', event);
+                  event.preventDefault();
+                },
+                // Attempt to restore context
+                onContextRestored: () => {
+                  console.log('WebGL context restored');
+                }
               }}>
               <ambientLight intensity={0.3} /> {/* Darker ambient for better contrast */}
               <pointLight position={[5, 5, 5]} intensity={1.2} color="#FFF8E0" />
@@ -121,7 +136,8 @@ function PlanetPage({ planets }) {
                 <DetailedPlanet 
                   color={planet.color} 
                   planetId={planet.id} 
-                  onMoonClick={handleMoonClick} 
+                  onMoonClick={handleMoonClick}
+                  simplifiedRendering={planet.simplifiedRendering || false}
                 />
               )}
               
@@ -137,6 +153,7 @@ function PlanetPage({ planets }) {
               {planet.id === 'saturn' && <PlanetaryMoons planetId="saturn" onMoonClick={handleMoonClick} />}
               {planet.id === 'mars' && <PlanetaryMoons planetId="mars" onMoonClick={handleMoonClick} />}
               {planet.id === 'pluto' && <PlanetaryMoons planetId="pluto" onMoonClick={handleMoonClick} />}
+              {/* Do not attempt to render PlanetaryMoons for other dwarf planets */}
               
               {/* Moon visit button for Earth */}
               {planet.id === 'earth' && (
@@ -161,18 +178,37 @@ function PlanetPage({ planets }) {
                 </group>
               )}
               
-              {/* Filter facts for this planet */}
+              {/* Filter facts for this planet, with reduced count for simplified dwarf planets */}
               <OrbitingFacts 
                 facts={astronomyFacts.filter(fact => 
                   fact.toLowerCase().includes(planet.id.toLowerCase()) || 
                   fact.toLowerCase().includes(planet.name.toLowerCase())
                 )} 
-                maxActive={3} 
+                maxActive={planet.simplifiedRendering ? 1 : 3} 
                 scene="planet-detail" 
               />
               
-              <Stars radius={100} depth={50} count={500} factor={2} />
-              <OrbitControls autoRotate={true} autoRotateSpeed={0.5} />
+              {/* Fewer stars for simplified dwarf planets */}
+              <Stars 
+                radius={100} 
+                depth={50} 
+                count={planet.simplifiedRendering ? 100 : 500} 
+                factor={2} 
+              />
+              {/* Use simpler controls with slower rotation for problematic dwarf planets */}
+              {planet.simplifiedRendering ? (
+                <OrbitControls 
+                  autoRotate={true} 
+                  autoRotateSpeed={0.2} // Slower rotation for simplified planets
+                  enableZoom={true}
+                  enableRotate={true}
+                  enablePan={false}
+                  minDistance={3}
+                  maxDistance={10}
+                />
+              ) : (
+                <OrbitControls autoRotate={true} autoRotateSpeed={0.5} />
+              )}
             </Canvas>
           </div>
         </>
