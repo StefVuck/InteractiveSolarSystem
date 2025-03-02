@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import planets, { dwarfPlanets } from './data/planets';
 
 // Lazy load pages with preload hints to improve loading performance
@@ -11,7 +11,19 @@ const MoonDetailPage = lazy(() => import('./components/pages/MoonDetailPage'));
 /**
  * Main application component with routing and navigation
  */
+// Main application component
 function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
+
+// Create a wrapper component that has access to useNavigate
+function AppContent() {
+  const navigate = useNavigate();
+  
   // State for the dwarf planet menu and moons dropdown
   const [dwarfMenuOpen, setDwarfMenuOpen] = useState(false);
   const [clickCount, setClickCount] = useState(0);
@@ -92,171 +104,163 @@ function App() {
       // For planets without moons, navigate directly
       navigate(`/planet/${planetId}`);
     }
-  };
-  
-  // For use with useNavigate hook
-  const navigate = (path) => {
-    window.location.href = path;
-  };
+  }
   
   return (
-    <Router>
-      <div className="app">
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">
-                <span className="solar-system-icon"></span>
-                Solar System
-              </Link>
+    <div className="app">
+      <nav>
+        <ul>
+          <li>
+            <Link to="/">
+              <span className="solar-system-icon"></span>
+              Solar System
+            </Link>
+          </li>
+          {planets.map(planet => (
+            <li key={planet.id} className={planetMoons[planet.id] ? 'has-moons' : ''}>
+              <a 
+                href={`/planet/${planet.id}`}
+                onClick={(e) => handlePlanetClick(e, planet.id)}
+                className={moonsDropdownFor === planet.id ? 'active' : ''}
+              >
+                <span 
+                  className="planet-icon" 
+                  style={{ 
+                    backgroundColor: planet.color,
+                    boxShadow: planet.id === 'saturn' ? `0 0 8px ${planet.color}` : 'none'
+                  }}
+                ></span>
+                {planet.name}
+                {planetMoons[planet.id] && (
+                  <span className="dropdown-indicator">▾</span>
+                )}
+              </a>
+              
             </li>
-            {planets.map(planet => (
-              <li key={planet.id} className={planetMoons[planet.id] ? 'has-moons' : ''}>
-                <a 
-                  href={`/planet/${planet.id}`}
-                  onClick={(e) => handlePlanetClick(e, planet.id)}
-                  className={moonsDropdownFor === planet.id ? 'active' : ''}
+          ))}
+        </ul>
+        
+        {/* Other Projects button */}
+        <a 
+          href="https://github.com/StefVuck" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="other-projects-button"
+        >
+          Other Projects
+        </a>
+        
+        {/* Hidden dwarf planet button (easter egg) */}
+        <button 
+          className={`dwarf-button ${dwarfMenuOpen ? 'active' : ''}`}
+          onClick={handleDwarfButtonClick}
+          aria-label="Dwarf Planets"
+          style={{ backgroundColor: dwarfMenuOpen ? '#FFCC00' : '#444' }}
+        />
+        
+        {/* Dropdown menu for dwarf planets */}
+        <div className={`dwarf-menu ${dwarfMenuOpen ? 'open' : ''}`}>
+          <ul>
+            {dwarfPlanets.map(dwarfPlanet => (
+              <li key={dwarfPlanet.id}>
+                <Link 
+                  to={`/planet/${dwarfPlanet.id}`}
+                  onClick={() => setDwarfMenuOpen(false)}
                 >
                   <span 
-                    className="planet-icon" 
-                    style={{ 
-                      backgroundColor: planet.color,
-                      boxShadow: planet.id === 'saturn' ? `0 0 8px ${planet.color}` : 'none'
-                    }}
+                    className="dwarf-planet-icon" 
+                    style={{ backgroundColor: dwarfPlanet.color }}
                   ></span>
-                  {planet.name}
-                  {planetMoons[planet.id] && (
-                    <span className="dropdown-indicator">▾</span>
-                  )}
-                </a>
-                
+                  {dwarfPlanet.name}
+                </Link>
               </li>
             ))}
           </ul>
-          
-          {/* Other Projects button */}
-          <a 
-            href="https://github.com/StefVuck" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="other-projects-button"
+        </div>
+        
+        {/* Dropdown menus for planets with moons */}
+        {Object.keys(planetMoons).map(planetId => (
+          <div 
+            key={`moons-dropdown-${planetId}`}
+            className={`moons-dropdown ${moonsDropdownFor === planetId ? 'open' : ''}`}
+            data-planet-id={planetId}
           >
-            Other Projects
-          </a>
-          
-          {/* Hidden dwarf planet button (easter egg) */}
-          <button 
-            className={`dwarf-button ${dwarfMenuOpen ? 'active' : ''}`}
-            onClick={handleDwarfButtonClick}
-            aria-label="Dwarf Planets"
-            style={{ backgroundColor: dwarfMenuOpen ? '#FFCC00' : '#444' }}
-          />
-          
-          {/* Dropdown menu for dwarf planets */}
-          <div className={`dwarf-menu ${dwarfMenuOpen ? 'open' : ''}`}>
             <ul>
-              {dwarfPlanets.map(dwarfPlanet => (
-                <li key={dwarfPlanet.id}>
+              {planetMoons[planetId].map(moon => (
+                <li key={moon.id}>
                   <Link 
-                    to={`/planet/${dwarfPlanet.id}`}
-                    onClick={() => setDwarfMenuOpen(false)}
+                    to={`/moon/${moon.id}`}
+                    onClick={() => setMoonsDropdownFor(null)}
                   >
                     <span 
-                      className="dwarf-planet-icon" 
-                      style={{ backgroundColor: dwarfPlanet.color }}
+                      className="moon-icon" 
+                      style={{ 
+                        backgroundColor: moon.id === 'io' ? '#E8D14C' : 
+                                        moon.id === 'europa' ? '#F0F8FF' :
+                                        moon.id === 'ganymede' ? '#C0C8D0' :
+                                        moon.id === 'callisto' ? '#9A9AA0' :
+                                        moon.id === 'titan' ? '#E8A952' :
+                                        moon.id === 'phobos' ? '#8F7A6A' :
+                                        moon.id === 'deimos' ? '#9A8A7A' : '#E0E0E0' 
+                      }}
                     ></span>
-                    {dwarfPlanet.name}
+                    {moon.name}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
-          
-          {/* Dropdown menus for planets with moons */}
-          {Object.keys(planetMoons).map(planetId => (
-            <div 
-              key={`moons-dropdown-${planetId}`}
-              className={`moons-dropdown ${moonsDropdownFor === planetId ? 'open' : ''}`}
-              data-planet-id={planetId}
-            >
-              <ul>
-                {planetMoons[planetId].map(moon => (
-                  <li key={moon.id}>
-                    <Link 
-                      to={`/moon/${moon.id}`}
-                      onClick={() => setMoonsDropdownFor(null)}
-                    >
-                      <span 
-                        className="moon-icon" 
-                        style={{ 
-                          backgroundColor: moon.id === 'io' ? '#E8D14C' : 
-                                          moon.id === 'europa' ? '#F0F8FF' :
-                                          moon.id === 'ganymede' ? '#C0C8D0' :
-                                          moon.id === 'callisto' ? '#9A9AA0' :
-                                          moon.id === 'titan' ? '#E8A952' :
-                                          moon.id === 'phobos' ? '#8F7A6A' :
-                                          moon.id === 'deimos' ? '#9A8A7A' : '#E0E0E0' 
-                        }}
-                      ></span>
-                      {moon.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
-        
-        <main>
-          <Home planets={planets} dwarfMenuOpen={dwarfMenuOpen} />
-          <Routes>
-            <Route path="/" element={null} />
-            <Route 
-              path="/planet/:planetId" 
-              element={
-                <Suspense fallback={
-                  <div className="loading">
-                    <div className="loader-spinner" style={{
-                      border: '5px solid #333',
-                      borderTop: '5px solid #3498db',
-                      borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
-                      animation: 'spin 1s linear infinite',
-                      margin: '20px auto'
-                    }}></div>
-                    <div>Loading planet details...</div>
-                  </div>
-                }>
-                  <PlanetPage planets={[...planets, ...dwarfPlanets]} />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="/moon/:moonId" 
-              element={
-                <Suspense fallback={
-                  <div className="loading">
-                    <div className="loader-spinner" style={{
-                      border: '5px solid #333',
-                      borderTop: '5px solid #3498db',
-                      borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
-                      animation: 'spin 1s linear infinite',
-                      margin: '20px auto'
-                    }}></div>
-                    <div>Loading moon details...</div>
-                  </div>
-                }>
-                  <MoonDetailPage planets={[...planets, ...dwarfPlanets]} />
-                </Suspense>
-              } 
-            />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+        ))}
+      </nav>
+      
+      <main>
+        <Routes>
+          <Route path="/" element={<Home planets={planets} dwarfMenuOpen={dwarfMenuOpen} />} />
+          <Route 
+            path="/planet/:planetId" 
+            element={
+              <Suspense fallback={
+                <div className="loading">
+                  <div className="loader-spinner" style={{
+                    border: '5px solid #333',
+                    borderTop: '5px solid #3498db',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    animation: 'spin 1s linear infinite',
+                    margin: '20px auto'
+                  }}></div>
+                  <div>Loading planet details...</div>
+                </div>
+              }>
+                <PlanetPage planets={[...planets, ...dwarfPlanets]} />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/moon/:moonId" 
+            element={
+              <Suspense fallback={
+                <div className="loading">
+                  <div className="loader-spinner" style={{
+                    border: '5px solid #333',
+                    borderTop: '5px solid #3498db',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    animation: 'spin 1s linear infinite',
+                    margin: '20px auto'
+                  }}></div>
+                  <div>Loading moon details...</div>
+                </div>
+              }>
+                <MoonDetailPage planets={[...planets, ...dwarfPlanets]} />
+              </Suspense>
+            } 
+          />
+        </Routes>
+      </main>
+    </div>
   );
 }
 

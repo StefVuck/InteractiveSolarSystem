@@ -25,6 +25,7 @@ function PerformanceMonitor() {
 
 // Import components - with code splitting for less essential components
 import EnhancedPlanet from '../components/celestial/EnhancedPlanet';
+import EarthViewController from '../components/celestial/EarthViewController';
 const AsteroidBelt = lazy(() => import('../components/celestial/AsteroidBelt'));
 const RedSpot = lazy(() => import('../components/celestial/RedSpot'));
 const MiniMoon = lazy(() => import('../components/celestial/MiniMoon'));
@@ -122,7 +123,8 @@ function DwarfPlanetOrbit({ dwarfPlanet, orbitalSpeed, children }) {
 /**
  * Home component showing the entire solar system
  */
-function Home({ planets, dwarfMenuOpen }) {
+// Main Home component for solar system view
+const Home = ({ planets, dwarfMenuOpen }) => {
   const navigate = useNavigate();
   const [cameraPosition, setCameraPosition] = useState([0, 10, 30]); // Moved further back
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -235,6 +237,17 @@ function Home({ planets, dwarfMenuOpen }) {
     // After animation completes, navigate to the planet page
     setTimeout(() => {
       navigate(`/planet/${planetId}`);
+    }, 1000);
+  };
+  
+  // Handle moon click
+  const handleMoonClick = (moonId) => {
+    // Start transition animation
+    setIsTransitioning(true);
+    
+    // After animation completes, navigate to the moon page
+    setTimeout(() => {
+      navigate(`/moon/${moonId}`);
     }, 1000);
   };
   
@@ -482,28 +495,27 @@ function Home({ planets, dwarfMenuOpen }) {
               orbitRadius={orbitRadius}
               orbitalSpeed={getOrbitalSpeed(planet.id)}
             >
-              <EnhancedPlanet 
-                position={[0, 0, 0]} 
-                color={planet.color} 
-                size={planetSize}
-                name={planet.name}
-                onClick={() => handlePlanetClick(planet.id)}
-                hasRings={hasRings(planet.id)}
-                planetId={planet.id}
-                ringsColor={ringProps.ringsColor}
-                ringsRotation={ringProps.ringsRotation}
-                ringsTexture={ringProps.ringsTexture}
-                ringsOpacity={ringProps.ringsOpacity}
-              />
-              
-              {/* Add moon to Earth */}
-              {planet.id === 'earth' && (
-                <Suspense fallback={null}>
-                  <MiniMoon 
-                    parentPosition={[0, 0, 0]} 
-                    parentSize={planetSize}
-                  />
-                </Suspense>
+              {planet.id === 'earth' ? (
+                <EarthViewController 
+                  initialPosition={[0, 0, 0]}
+                  initialSize={planetSize}
+                  name={planet.name}
+                  onMoonClick={() => handleMoonClick('moon')}
+                />
+              ) : (
+                <EnhancedPlanet 
+                  position={[0, 0, 0]} 
+                  color={planet.color} 
+                  size={planetSize}
+                  name={planet.name}
+                  onClick={() => handlePlanetClick(planet.id)}
+                  hasRings={hasRings(planet.id)}
+                  planetId={planet.id}
+                  ringsColor={ringProps.ringsColor}
+                  ringsRotation={ringProps.ringsRotation}
+                  ringsTexture={ringProps.ringsTexture}
+                  ringsOpacity={ringProps.ringsOpacity}
+                />
               )}
               
               {/* Add Great Red Spot to Jupiter */}
